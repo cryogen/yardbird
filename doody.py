@@ -1,18 +1,18 @@
 from yardbird import IRCResponse
 
 def foo(request):
-    if request.channel:
+    nick = request.user.split('!', 1)[0]
+    if request.channel != request.nick:
         recipient = request.channel
     else:
-        recipient = request.user
-    nick = request.user.split('!', 1)[0]
+        recipient = nick
     return IRCResponse(recipient, u'foo on %s!' % nick)
 
 def bar(request):
-    if request.channel:
+    nick = request.user.split('!', 1)[0]
+    if request.channel != request.nick:
         recipient = request.channel
     else:
-        recipient = request.user
-    nick = request.user.split('!', 1)[0]
+        recipient = nick
     return IRCResponse(recipient, u'BAR UPON %s!' % nick.upper())
 
