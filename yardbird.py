@@ -20,6 +20,9 @@ class IRCRequest(object):
         self.message = force_unicode(msg)
         self.method = method.lower()
         self.context = kwargs
+    def __str__(self):
+        return u'%s: <%s> %s' % (self.channel, self.user,
+                                    self.message)
 
 class IRCResponse(object):
     def __init__(self, recipient, data, method=irc.IRCClient.msg,
@@ -55,9 +58,13 @@ class DjangoBot(irc.IRCClient):
         """This method abuses the django url resolver to detect
         interesting messages and dispatch them to callback functions
         based on regular expression matches."""
-        resolver = urlresolvers.get_resolver('.'.join((settings.ROOT_MSGCONF,
-                                           req.method.lower())))
-        callback, args, kwargs = yield resolver.resolve('/' + req.message)
+        resolver = urlresolvers.get_resolver('.'.join(
+            (settings.ROOT_MSGCONF, req.method.lower())))
+        try:
+            callback, args, kwargs = yield resolver.resolve('/' + req.message)
+        except urlresolvers.Resolver404:
+            print req
+            return
         response = yield callback(req, *args, **kwargs)
         print response
         defer.returnValue(response.method(self, response.recipient,
