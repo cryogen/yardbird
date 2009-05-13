@@ -9,7 +9,7 @@ from django.utils.encoding import force_unicode
 from django.conf import settings
 
 if 'DJANGO_SETTINGS_MODULE' not in os.environ:
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'test.settings'
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'example.settings'
 
 class IRCRequest(object):
     def __init__(self, nick, user, channel, msg, method='privmsg',

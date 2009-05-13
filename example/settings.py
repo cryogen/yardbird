@@ -1,4 +1,4 @@
-# Django settings for test project.
+# Django settings for example project.
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -63,8 +63,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'test.urls'
-ROOT_MSGCONF = 'test'
+ROOT_URLCONF = 'example.urls'
+ROOT_MSGCONF = 'example'
 IRC_NICK = 'yardbird'
 IRC_CHANNELS = ( '#yardbird', )
 
