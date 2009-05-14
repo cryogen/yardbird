@@ -40,9 +40,9 @@ from foobar import ircviews
 
 urlpatterns = patterns('',
    #msg(r'^(?P<addressed>\w+?):\s', include('privmsg.addressed')),
-                       (r'^(?P<addressed>\S+:\s)?.*foo', ircviews.foo),
-                       (r'^(?P<addressed>\S+:\s)?.*welcome datacomp', ircviews.foo),
-                       (r'^(?P<addressed>\S+:\s)?.*bar', ircviews.bar),
+                       (r'^((?P<addressed>\S+):\s)?.*foo', ircviews.foo),
+                       (r'^((?P<addressed>\S+):\s)?.*welcome datacomp', ircviews.foo),
+                       (r'^((?P<addressed>\S+):\s)?.*bar', ircviews.bar),
                       )
 
 # bucket patterns to dispatch to.  Horribly badly thought out.
