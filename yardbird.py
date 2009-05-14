@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import time
 import os
+import re
 
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol, defer
@@ -10,6 +11,7 @@ from django.conf import settings
 
 if 'DJANGO_SETTINGS_MODULE' not in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'example.settings'
+
 
 class IRCRequest(object):
     def __init__(self, nick, user, channel, msg, method='privmsg',
@@ -21,8 +23,8 @@ class IRCRequest(object):
         self.method = method.lower()
         self.context = kwargs
     def __str__(self):
-        return u'%s: <%s> %s' % (self.channel, self.user,
-                                    self.message)
+        s = u'%s: <%s> %s' % (self.channel, self.user, self.message)
+        return s.encode('utf-8')
 
 class IRCResponse(object):
     def __init__(self, recipient, data, method=irc.IRCClient.msg,
@@ -34,8 +36,25 @@ class IRCResponse(object):
     def __call__(self):
         return self.method(recipient, data)
     def __str__(self):
-        return u'%s: <%s> %s' % (self.method, self.recipient, self.data)
+        s = u'%s: <%s> %s' % (self.method, self.recipient, self.data)
+        return s.encode('utf-8')
 
+def reply(bot, request, message, *args, **kwargs):
+    nick = request.user.split('!', 1)[0]
+    if request.channel != request.nick:
+        recipient = request.channel
+        kwargs['nick'] = nick
+        message = '%(nick)s: ' + message
+    else:
+        recipient = nick
+    res = IRCResponse(recipient, message % kwargs)
+    return res.method(bot, res.recipient, res.data.encode('UTF-8'))
+
+def terrible_error(failure, bot, request, *args, **kwargs):
+    e = str(failure.getErrorMessage())
+    if 'path' in e and 'tried' in e:
+        return reply(bot, request, 'Dude?')
+    return reply(bot, request, u'Dude! %s' % e)
 
 class DjangoBot(irc.IRCClient):
     def connectionMade(self):
@@ -60,20 +79,18 @@ class DjangoBot(irc.IRCClient):
         based on regular expression matches."""
         resolver = urlresolvers.get_resolver('.'.join(
             (settings.ROOT_MSGCONF, req.method.lower())))
-        try:
-            callback, args, kwargs = yield resolver.resolve('/' + req.message)
-        except urlresolvers.Resolver404:
-            print req
-            return
+        callback, args, kwargs = yield resolver.resolve('/' + req.message)
         response = yield callback(req, *args, **kwargs)
-        print response
+        print response # Cheap debug log I suppose.
         defer.returnValue(response.method(self, response.recipient,
                                           response.data.encode('UTF-8')))
 
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self.nickname, user, channel, msg, 'privmsg')
-            self.dispatch(req)
+            self.dispatch(req).addErrback(terrible_error, self, req)
+            # That Errback should be something smart that separates 404
+            # from 500 etc.
     def action(self, user, channel, msg):
         """This will get called when the bot sees someone do an action."""
         if user.split('!', 1)[0] != self.nickname:

@@ -1,6 +1,6 @@
 from yardbird import IRCResponse
 
-def foo(request):
+def foo(request, *args, **kwargs):
     nick = request.user.split('!', 1)[0]
     if request.channel != request.nick:
         recipient = request.channel
@@ -8,7 +8,7 @@ def foo(request):
         recipient = nick
     return IRCResponse(recipient, u'foo on %s!' % nick)
 
-def bar(request):
+def bar(request, *args, **kwargs):
     nick = request.user.split('!', 1)[0]
     if request.channel != request.nick:
         recipient = request.channel
