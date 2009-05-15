@@ -1,4 +1,0 @@
-Django dispatches input patterns to functions, has a sweet ORM, a Form handler for input validation, and a reasonable but deliberately simple template rendering system.  It relies on your Web server to handle most of the nasty protocol details and concurrency horror.
-So why not use this model for IRC?  Use Twisted to take the place of apache, and instead of URLs we pattern-match on actual lines of text seen in IRC.  The Form handling is just about the only thing that doesn't fit much at all, and even the template language is kind of helpful.
-
-So what we need is a new BaseHandler object that dispatches to privmsg.py, action.py, notice.py, etc.  The "request" object will be a newly-hacked thing that contains data on the IRC session (nicknames, masks, channels, all that sort of thing we know cheaply already) and we catch the HTTP error exceptions and hook into errorbacks.
