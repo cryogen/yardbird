@@ -35,23 +35,6 @@ def msg(regex, view, kwargs=None, name=None, prefix=''):
 
 # Enough bikesheddin'!
 
-from foobar import ircviews
-#from bucket import ircviews as bucket
-
 urlpatterns = patterns('',
-   #msg(r'^(?P<addressed>\w+?):\s', include('privmsg.addressed')),
-                       (r'^((?P<addressed>\S+):\s)?.*foo', ircviews.foo),
-                       (r'^((?P<addressed>\S+):\s)?.*welcome datacomp', ircviews.foo),
-                       (r'^((?P<addressed>\S+):\s)?.*bar', ircviews.bar),
+       (r'^((?P<addressee>\S+):\s+)?', include('example.bucket.commands')),
                       )
-
-# bucket patterns to dispatch to.  Horribly badly thought out.
-#addressed = patterns(
-#('(?P<key>.*?)\s+=~\s+s/(?P<from>(\\/|[^/])+)/(?P<to>.*)/(?P<flags>[gi]*)\s*$',
-#bucket.edit),
-#(r'^(?P<addressed>\S+:\s)?(?P<key>.*?)\s+=~\s+/(?P<match>(\\/|[^/])+)/',
-#bucket.search),
-#(r'^(?P<addressed>\S+:\s)?literal
-#)
-
-# vim:set shiftwidth=4 tabstop=4 expandtab smarttab textwidth=72:

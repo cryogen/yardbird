@@ -51,6 +51,7 @@ def reply(bot, request, message, *args, **kwargs):
     return res.method(bot, res.recipient, res.data.encode('UTF-8'))
 
 def terrible_error(failure, bot, request, *args, **kwargs):
+    print failure
     e = str(failure.getErrorMessage())
     if 'path' in e and 'tried' in e:
         return reply(bot, request, 'Dude?')
