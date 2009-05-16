@@ -27,7 +27,7 @@ further:
 The Explanation
 ===============
 
-I took a look at Bucket, and it's about a thousand lines of code.  It
+I took a look at bucket, and it's about a thousand lines of code.  It
 uses POE, which is basically Perl's answer to Twisted.  It's an
 asynchronous deferred-execution-with-callbacks way of coding, and comes
 with lots of network protocol modules and database access modules.  One
@@ -103,7 +103,7 @@ Some side-effects of doing things this way:
 
         1. We'd get the django database management webapp for free
         2. The above also gets us user and group tables for free
-        3. We can write other django web apps that Dumont could control
-        4. We could write web front-ends to dumont's factoid database
+        3. We can write other django web apps that yardbird could control
+        4. We could write web front-ends to yardbird's factoid database
         5. We can probably port this model to XMPP trivially
 
