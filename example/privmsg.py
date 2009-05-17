@@ -37,5 +37,6 @@ def msg(regex, view, kwargs=None, name=None, prefix=''):
 # Enough bikesheddin'!
 
 urlpatterns = patterns('',
-       (r'^((?P<addressee>\S+):\s+)?', include('example.iotower.commands')),
+                       (r'^\W*(?:(?P<addressee>\S+):\s+)?',
+                        include('example.iotower.commands')),
                       )

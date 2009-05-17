@@ -9,7 +9,7 @@ urlpatterns = patterns('example.iotower.ircviews',
  \s*$""", 'edit'),
 
  (r"""^what's \s+ (?P<key>.*?) \W*$""", 'trigger'),
- (r"""^what \s+ do(?:es)? \s+ (?P<key>.*?) \s+ (?P<verb>\w+?) \W*$""",
+(r"""^what \s+ (?:do|does|did) \s+ (?P<key>.*?) \s+ (?P<verb>\w+?) \W*$""",
   'trigger'),
  (r"""^what \s+ (?P<verb>\w+) \s+ (?P<key>.*?) \W*$""", 'trigger'),
 
