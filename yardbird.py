@@ -34,6 +34,7 @@ class IRCRequest(object):
                  **kwargs):
         self.nick = connection.nickname
         self.user = user
+        self.user_nick = user.split('!', 1)[0]
         self.channel = channel
         self.message = force_unicode(msg)
         self.method = method.lower()

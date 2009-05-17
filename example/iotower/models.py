@@ -24,19 +24,17 @@ class FactoidResponse(models.Model):
     disabled_by = models.CharField(max_length=30,blank=True, null=True)
     def __unicode__(self):
         if self.disabled:
-            return u'<%s> %s-%s <%s>: %s =%s= %s' % (self.created_by,
-                                                     self.created,
-                                                     self.disabled,
-                                                     self.disabled_by,
-                                                     self.fact.fact,
-                                                     self.verb,
-                                                     self.text)
-        else:
-            return u'%s <%s> %s =%s= %s' % (self.created,
-                                            self.created_by,
-                                            self.fact.fact, self.verb,
-                                            self.text)
-
-        return u'%s <%s> %s' % (self.fact.fact, self.verb, self.text)
+            return u'[%s] <%s> %s-%s <%s>: %s =%s= %s' % (self.pk,
+                                                          self.created_by,
+                                                          self.created,
+                                                          self.disabled,
+                                                          self.disabled_by,
+                                                          self.fact.fact,
+                                                          self.verb,
+                                                          self.text)
+        return u'[%s] %s <%s> %s =%s= %s' % (self.pk, self.created,
+                                             self.created_by,
+                                             self.fact.fact, self.verb,
+                                             self.text)
     class Meta:
         unique_together = ("fact", "verb", "text", "created")
