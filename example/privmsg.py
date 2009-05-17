@@ -9,7 +9,8 @@ import yardbird
 class RegexIRCPattern(RegexURLPattern):
     def __init__(self, regex, *args, **kwargs):
         RegexURLPattern.__init__(self, regex, *args, **kwargs)
-        self.regex = re.compile(regex, re.UNICODE|re.IGNORECASE)
+        self.regex = re.compile(regex,
+                                re.UNICODE|re.IGNORECASE|re.VERBOSE)
 
 def patterns(prefix, *args):
     pattern_list = []
