@@ -105,8 +105,16 @@ class DjangoBot(irc.IRCClient):
         callback, args, kwargs = yield resolver.resolve('/' + req.message)
         response = yield callback(req, *args, **kwargs)
         yardlogger.info(response)
-        defer.returnValue(self.methods[response.method](response.recipient,
-                                          response.data.encode('UTF-8')))
+        if response.method == 'PRIVMSG':
+            #XXX: 32 is a magic number until I can figure out how to
+            #     grab the hostmask
+            opts = {'length': 497 - len(self.nickname) - len(response.recipient) - 32}
+        else:
+            opts = {}
+        defer.returnValue(
+            self.methods[response.method](response.recipient,
+                                          response.data.encode('UTF-8'),
+                                          **opts))
 
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
