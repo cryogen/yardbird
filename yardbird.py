@@ -8,15 +8,31 @@ from twisted.internet import reactor, protocol, defer
 from django.core import urlresolvers
 from django.utils.encoding import force_unicode
 from django.conf import settings
+import logging
+
+import logging.handlers
+
+LOG_FILENAME = '/tmp/yardbird.log'
+
+# Set up a specific logger with our desired output level
+yardlogger = logging.getLogger('YardLogger')
+yardlogger.setLevel(logging.DEBUG)
+
+# Add the log message handler to the logger
+handler = logging.handlers.TimedRotatingFileHandler(LOG_FILENAME, 'm',
+                                                    10)
+
+yardlogger.addHandler(handler)
+
 
 if 'DJANGO_SETTINGS_MODULE' not in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'example.settings'
 
 
 class IRCRequest(object):
-    def __init__(self, nick, user, channel, msg, method='privmsg',
+    def __init__(self, connection, user, channel, msg, method='privmsg',
                  **kwargs):
-        self.nick = nick
+        self.nick = connection.nickname
         self.user = user
         self.channel = channel
         self.message = force_unicode(msg)
@@ -27,14 +43,12 @@ class IRCRequest(object):
         return s.encode('utf-8')
 
 class IRCResponse(object):
-    def __init__(self, recipient, data, method=irc.IRCClient.msg,
+    def __init__(self, recipient, data, method='PRIVMSG',
                  **kwargs):
         self.recipient = recipient
         self.data = data
         self.method = method
         self.context = kwargs
-    def __call__(self):
-        return self.method(recipient, data)
     def __str__(self):
         s = u'%s: <%s> %s' % (self.method, self.recipient, self.data)
         return s.encode('utf-8')
@@ -47,17 +61,23 @@ def reply(bot, request, message, *args, **kwargs):
         message = '%(nick)s: ' + message
     else:
         recipient = nick
-    res = IRCResponse(recipient, message % kwargs)
-    return res.method(bot, res.recipient, res.data.encode('UTF-8'))
+    res = IRCResponse(recipient, message % kwargs, method='NOTICE')
+    return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
 
 def terrible_error(failure, bot, request, *args, **kwargs):
-    print failure
+    yardlogger.debug(failure)
     e = str(failure.getErrorMessage())
     if 'path' in e and 'tried' in e:
         return reply(bot, request, 'Dude?')
     return reply(bot, request, u'Dude! %s' % e)
 
 class DjangoBot(irc.IRCClient):
+    def __init__(self):
+        self.methods = {'PRIVMSG': self.msg,
+                        'ACTION':  self.me,
+                        'NOTICE':  self.notice,
+                        'TOPIC':   self.topic,
+                       }
     def connectionMade(self):
         self.nickname = self.factory.nickname
         irc.IRCClient.connectionMade(self)
@@ -78,17 +98,18 @@ class DjangoBot(irc.IRCClient):
         """This method abuses the django url resolver to detect
         interesting messages and dispatch them to callback functions
         based on regular expression matches."""
+        yardlogger.info(req)
         resolver = urlresolvers.get_resolver('.'.join(
             (settings.ROOT_MSGCONF, req.method.lower())))
         callback, args, kwargs = yield resolver.resolve('/' + req.message)
         response = yield callback(req, *args, **kwargs)
-        print response # Cheap debug log I suppose.
-        defer.returnValue(response.method(self, response.recipient,
+        yardlogger.info(response)
+        defer.returnValue(self.methods[response.method](response.recipient,
                                           response.data.encode('UTF-8')))
 
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
-            req = IRCRequest(self.nickname, user, channel, msg, 'privmsg')
+            req = IRCRequest(self, user, channel, msg, 'privmsg')
             self.dispatch(req).addErrback(terrible_error, self, req)
             # That Errback should be something smart that separates 404
             # from 500 etc.
