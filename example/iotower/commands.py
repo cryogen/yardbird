@@ -1,7 +1,7 @@
 from example.privmsg import patterns
-import example.bucket.ircviews
+import example.iotower.ircviews
 
-urlpatterns = patterns('example.bucket.ircviews',
+urlpatterns = patterns('example.iotower.ircviews',
          (r"""^what's\s+(?P<key>.*?)\W*$""", 'trigger'),
          (r"""^what\s+do(?:es)?\s+(?P<key>.*?)\s+(?P<verb>\w+?)\W*$""", 'trigger'),
          (r"""^what\s+(?P<verb>\w+)\s+(?P<key>.*?)\W*$""", 'trigger'),
