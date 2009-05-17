@@ -13,11 +13,11 @@ def reply(request, text, *args):
     return IRCResponse(recipient, text % args)
 
 def addressed(request, *args, **kwargs):
-        if request.channel == request.nick:
-            return True
-        elif 'addressee' in kwargs and kwargs['addressee'] == request.nick:
-            return False
+    if request.channel == request.nick:
         return True
+    elif 'addressee' in kwargs and kwargs['addressee'] == request.nick:
+        return True
+    return False
 
 def require_addressing(function):
     def new(request, *args, **kwargs):
