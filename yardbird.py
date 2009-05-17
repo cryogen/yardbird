@@ -4,7 +4,7 @@ import os
 import re
 
 from twisted.words.protocols import irc
-from twisted.internet import reactor, protocol, defer
+from twisted.internet import reactor, protocol, defer, threads
 from django.core import urlresolvers
 from django.utils.encoding import force_unicode
 from django.conf import settings
@@ -101,7 +101,8 @@ class DjangoBot(irc.IRCClient):
         resolver = urlresolvers.get_resolver('.'.join(
             (settings.ROOT_MSGCONF, req.method.lower())))
         callback, args, kwargs = yield resolver.resolve('/' + req.message)
-        response = yield callback(req, *args, **kwargs)
+        response = yield threads.deferToThread(callback, req, *args,
+                                               **kwargs)
         if response.method == 'QUIET':
             defer.returnValue(True)
         elif response.method == 'PRIVMSG':
