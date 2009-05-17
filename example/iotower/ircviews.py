@@ -42,8 +42,10 @@ def trigger(request, key='', verb='', **kwargs):
     if addressed(request, **kwargs):
         factoid = get_object_or_404(Factoid, fact__iexact=key)
     else:
-        factoid = Factoid.objects.get(fact__iexact=key)
-
+        try:
+            factoid = Factoid.objects.get(fact__iexact=key)
+        except:
+            return IRCResponse('', '', 'QUIET')
     try:
         text = factoid.factoidresponse_set.filter(
             verb__contains=verb,disabled__exact=None).order_by("?")[0]
@@ -57,7 +59,17 @@ def trigger(request, key='', verb='', **kwargs):
 def literal(request, key='', **kwargs):
     factoid = get_object_or_404(Factoid, fact__iexact=key)
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
-    return reply(request, unicode(responses.order_by('created')))
+    text = key
+    verb = ''
+    for response in responses.order_by('verb'):
+        if response.verb != verb:
+            verb = response.verb
+            text += ' =%s= ' % verb
+        else:
+            text += '|'
+        text += '%s' % response.text
+
+    return reply(request, unicode(text))
 
 @require_addressing
 def edit(request, key='', pattern='', replacement='', re_flags='', **kwargs):
@@ -72,10 +84,7 @@ def edit(request, key='', pattern='', replacement='', re_flags='', **kwargs):
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
     for response in responses:
         if pat.search(response.text):
-            print response.text
-            print pattern, "|", replacement, "|", count
             newtext = pat.sub(replacement, response.text, count)
-            print newtext
             edited = FactoidResponse(fact=factoid, verb=response.verb,
                                      text=newtext,
                                      created_by=request.user_nick)

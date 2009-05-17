@@ -17,11 +17,8 @@ LOG_FILENAME = '/tmp/yardbird.log'
 # Set up a specific logger with our desired output level
 yardlogger = logging.getLogger('YardLogger')
 yardlogger.setLevel(logging.DEBUG)
-
 # Add the log message handler to the logger
-handler = logging.handlers.TimedRotatingFileHandler(LOG_FILENAME, 'm',
-                                                    10)
-
+handler = logging.handlers.TimedRotatingFileHandler(LOG_FILENAME, 'm', 10)
 yardlogger.addHandler(handler)
 
 
@@ -79,6 +76,7 @@ class DjangoBot(irc.IRCClient):
                         'NOTICE':  self.notice,
                         'TOPIC':   self.topic,
                        }
+        self.hostmask = '' # until we see ourselves speak, we do not know
     def connectionMade(self):
         self.nickname = self.factory.nickname
         irc.IRCClient.connectionMade(self)
@@ -89,6 +87,7 @@ class DjangoBot(irc.IRCClient):
         print("[disconnected at %s]" %
                         time.asctime(time.localtime(time.time())))
     def signedOn(self):
+        self.msg(self.nickname, 'Watching for my own hostmask')
         for channel in self.factory.channels:
             self.join(channel)
     def joined(self, channel):
@@ -99,16 +98,17 @@ class DjangoBot(irc.IRCClient):
         """This method abuses the django url resolver to detect
         interesting messages and dispatch them to callback functions
         based on regular expression matches."""
-        yardlogger.info(req)
         resolver = urlresolvers.get_resolver('.'.join(
             (settings.ROOT_MSGCONF, req.method.lower())))
         callback, args, kwargs = yield resolver.resolve('/' + req.message)
         response = yield callback(req, *args, **kwargs)
-        yardlogger.info(response)
-        if response.method == 'PRIVMSG':
-            #XXX: 32 is a magic number until I can figure out how to
-            #     grab the hostmask
-            opts = {'length': 497 - len(self.nickname) - len(response.recipient) - 32}
+        if response.method == 'QUIET':
+            defer.returnValue(True)
+        elif response.method == 'PRIVMSG':
+            opts = {'length':
+                    510 - len(':! PRIVMSG  :' + self.nickname +
+                              response.recipient + self.hostmask)}
+            yardlogger.info(response)
         else:
             opts = {}
         defer.returnValue(
@@ -119,13 +119,14 @@ class DjangoBot(irc.IRCClient):
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self, user, channel, msg, 'privmsg')
+            yardlogger.info(req)
             self.dispatch(req).addErrback(terrible_error, self, req)
-            # That Errback should be something smart that separates 404
-            # from 500 etc.
+        else:
+            self.hostmask = user.split('!', 1)[1]
     def action(self, user, channel, msg):
         """This will get called when the bot sees someone do an action."""
         if user.split('!', 1)[0] != self.nickname:
-            req = IRCRequest(self.nickname, user, channel, msg, 'action')
+            req = IRCRequest(self, user, channel, msg, 'action')
             self.dispatch(req)
     def irc_NICK(self, prefix, params):
         """Called when an IRC user changes their nickname."""
