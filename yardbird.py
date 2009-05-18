@@ -30,6 +30,7 @@ class IRCRequest(object):
     def __init__(self, connection, user, channel, msg, method='privmsg',
                  **kwargs):
         self.nick = connection.nickname
+        self.chanops = connection.chanops
         self.user = user
         self.user_nick = user.split('!', 1)[0]
         self.channel = channel
@@ -76,7 +77,13 @@ class DjangoBot(irc.IRCClient):
                         'NOTICE':  self.notice,
                         'TOPIC':   self.topic,
                        }
+        self.chanops = {}
         self.hostmask = '' # until we see ourselves speak, we do not know
+        self.versionName = 'yardbird'
+        self.sourceURL = 'http://zork.net/~nick/yardbird/'
+        self.realname = 'YardBird'
+        self.lineRate = 1
+
     def connectionMade(self):
         self.nickname = self.factory.nickname
         irc.IRCClient.connectionMade(self)
@@ -92,6 +99,16 @@ class DjangoBot(irc.IRCClient):
             self.join(channel)
     def joined(self, channel):
         print("[I have joined %s]" % channel)
+    def who(self, channel):
+        self.whoreplies={channel: []}
+        self.sendLine('WHO %s' % channel)
+    def irc_RPL_WHOREPLY(self, prefix, args):
+        me, chan, uname, mask, server, nick, modes, name = args
+        if '@' in modes:
+            self.whoreplies[chan].append('%s!%s@%s' % (nick, uname, mask))
+    def irc_RPL_ENDOFWHO(self, prefix, args):
+        self.chanops = self.whoreplies
+
 
     @defer.inlineCallbacks
     def dispatch(self, req):
@@ -117,6 +134,8 @@ class DjangoBot(irc.IRCClient):
                                           response.data.encode('UTF-8'),
                                           **opts))
 
+    def noticed(self, *args, **kwargs):
+        pass # We're automatic for the people
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self, user, channel, msg, 'privmsg')
