@@ -3,6 +3,7 @@ import re
 from models import *
 from django import http
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from yardbird import IRCResponse
 
 def reply(request, text, *args):
@@ -26,15 +27,25 @@ def require_addressing(function):
         raise Exception, 'You must address me to perform this operation.'
     return new
 
+def require_chanop(function):
+    def new(request, *args, **kwargs):
+        chan = settings.IRC_PRIVILEGED_CHANNEL
+        if '@' in request.chanmodes[chan][request.user]:
+            return function(request, *args, **kwargs)
+        raise Exception, 'You lack the necessary privileges to use this command.'
+    return new
+
 #@require_addressing
 def learn(request, key='', verb='is', value='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(fact=key.lower())
     if not created and factoid.protected:
         raise Exception, 'That factoid is protected!'
-    else:
+    elif 'also' in kwargs:
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
                                   created_by=request.user_nick)
         factext.save()
+    else:
+        return reply(request, u'Sorry, %s.', request.user_nick)
     return reply(request, u'OK, %s.', request.user_nick)
 
 def trigger(request, key='', verb='', **kwargs):
@@ -52,10 +63,11 @@ def trigger(request, key='', verb='', **kwargs):
     except IndexError:
         #FIXME: this is just for testing
         text = factoid.factoidresponse_set.order_by("?")[0]
-    return reply(request, u'%s: %s =%s= %s', request.user_nick, key,
+    return reply(request, u'%s: %s %s %s', request.user_nick, key,
                                               text.verb, text.text)
 
 @require_addressing
+@require_chanop
 def literal(request, key='', **kwargs):
     factoid = get_object_or_404(Factoid, fact__iexact=key)
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)

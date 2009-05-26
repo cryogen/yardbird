@@ -30,7 +30,7 @@ class IRCRequest(object):
     def __init__(self, connection, user, channel, msg, method='privmsg',
                  **kwargs):
         self.nick = connection.nickname
-        self.chanops = connection.chanops
+        self.chanmodes = connection.chanmodes
         self.user = user
         self.user_nick = user.split('!', 1)[0]
         self.channel = channel
@@ -53,13 +53,7 @@ class IRCResponse(object):
         return s.encode('utf-8')
 
 def reply(bot, request, message, *args, **kwargs):
-    nick = request.user.split('!', 1)[0]
-    if request.channel != request.nick:
-        recipient = request.channel
-        kwargs['nick'] = nick
-        message = '%(nick)s: ' + message
-    else:
-        recipient = nick
+    recipient = request.user.split('!', 1)[0]
     res = IRCResponse(recipient, message % kwargs, method='NOTICE')
     return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
 
@@ -77,7 +71,8 @@ class DjangoBot(irc.IRCClient):
                         'NOTICE':  self.notice,
                         'TOPIC':   self.topic,
                        }
-        self.chanops = {}
+        self.chanmodes = {}
+        self.whoreplies = {}
         self.hostmask = '' # until we see ourselves speak, we do not know
         self.versionName = 'yardbird'
         self.sourceURL = 'http://zork.net/~nick/yardbird/'
@@ -99,15 +94,21 @@ class DjangoBot(irc.IRCClient):
             self.join(channel)
     def joined(self, channel):
         print("[I have joined %s]" % channel)
+        self.who(channel)
+
     def who(self, channel):
-        self.whoreplies={channel: []}
+        self.whoreplies[channel] = {}
         self.sendLine('WHO %s' % channel)
     def irc_RPL_WHOREPLY(self, prefix, args):
-        me, chan, uname, mask, server, nick, modes, name = args
-        if '@' in modes:
-            self.whoreplies[chan].append('%s!%s@%s' % (nick, uname, mask))
+        me, chan, uname, host, server, nick, modes, name = args
+        mask = '%s!%s@%s' % (nick, uname, host)
+        self.whoreplies[chan][mask] = modes
     def irc_RPL_ENDOFWHO(self, prefix, args):
-        self.chanops = self.whoreplies
+        channel = args[1]
+        self.chanmodes[channel] = self.whoreplies[channel]
+        print self.chanmodes
+    def modeChanged(self, user, chan, setp, modes, args):
+        self.who(chan)
 
 
     @defer.inlineCallbacks
@@ -160,6 +161,10 @@ class DjangoBot(irc.IRCClient):
 if __name__ == '__main__':
     import sys
     from twisted.internet import ssl
+
+    # SRSLY?  I set up a FACTORY and my bot class is its PROTOCOL and
+    # then we pass my FACTORY and ANOTHER FACTORY into a REACTOR to run
+    # things.  Is Java responsible for this idiocy, or Heroin?
 
     f = protocol.ReconnectingClientFactory()
     f.protocol = DjangoBot
