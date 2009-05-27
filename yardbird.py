@@ -4,7 +4,7 @@ import os
 import re
 
 from twisted.words.protocols import irc
-from twisted.internet import reactor, protocol, defer, threads
+from twisted.internet import reactor, protocol, defer, threads, task
 from django.core import urlresolvers
 from django.utils.encoding import force_unicode
 from django.conf import settings
@@ -78,10 +78,15 @@ class DjangoBot(irc.IRCClient):
         self.sourceURL = 'http://zork.net/~nick/yardbird/'
         self.realname = 'YardBird'
         self.lineRate = 1
+        self.servername = ''
 
+    def myInfo(self, servername, version, umodes, cmodes):
+        self.servername = servername
     def connectionMade(self):
         self.nickname = self.factory.nickname
         irc.IRCClient.connectionMade(self)
+        l = task.LoopingCall(self.PING)
+        l.start(60.0) # call every minute
         print("[connected at %s]" %
                         time.asctime(time.localtime(time.time())))
     def connectionLost(self, reason):
@@ -96,6 +101,9 @@ class DjangoBot(irc.IRCClient):
         print("[I have joined %s]" % channel)
         self.who(channel)
 
+    def PING(self):
+        print 'PING %s' % self.servername
+        self.sendLine('PING %s' % self.servername)
     def who(self, channel):
         self.whoreplies[channel] = {}
         self.sendLine('WHO %s' % channel)
