@@ -85,12 +85,13 @@ class DjangoBot(irc.IRCClient):
     def connectionMade(self):
         self.nickname = self.factory.nickname
         irc.IRCClient.connectionMade(self)
-        l = task.LoopingCall(self.PING)
-        l.start(60.0) # call every minute
+        self.l = task.LoopingCall(self.PING)
+        self.l.start(60.0) # call every minute
         print("[connected at %s]" %
                         time.asctime(time.localtime(time.time())))
     def connectionLost(self, reason):
         irc.IRCClient.connectionLost(self, reason)
+        self.l.stop() # All done now.
         print("[disconnected at %s]" %
                         time.asctime(time.localtime(time.time())))
     def signedOn(self):
@@ -114,7 +115,6 @@ class DjangoBot(irc.IRCClient):
     def irc_RPL_ENDOFWHO(self, prefix, args):
         channel = args[1]
         self.chanmodes[channel] = self.whoreplies[channel]
-        print self.chanmodes
     def modeChanged(self, user, chan, setp, modes, args):
         self.who(chan)
 
@@ -130,6 +130,7 @@ class DjangoBot(irc.IRCClient):
         response = yield threads.deferToThread(callback, req, *args,
                                                **kwargs)
         if response.method == 'QUIET':
+            yardlogger.info(response)
             defer.returnValue(True)
         elif response.method == 'PRIVMSG':
             opts = {'length':
