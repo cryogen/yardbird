@@ -4,6 +4,7 @@ from models import *
 from django import http
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.template import Template, Context
 from yardbird import IRCResponse, render_to_response, render_to_reply
 from yardbird import render_silence, render_error, render_quick_reply
 
@@ -33,7 +34,7 @@ def learn(request, key='', verb='is', value='', also='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(fact=key.lower())
     if not created and factoid.protected:
         raise Exception, 'That factoid is protected!'
-    elif also:
+    elif also or created:
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
                                   created_by=request.nick)
         factext.save()
@@ -56,9 +57,11 @@ def trigger(request, key='', verb='', **kwargs):
     except IndexError:
         #FIXME: this is just for testing
         text = factoid.factoidresponse_set.order_by("?")[0]
+    context = Context(request.__dict__)
+    rendered = Template(text.text).render(context)
     return render_to_reply(request, 'factoid.irc', {'factoid': key,
                                                     'verb': text.verb,
-                                                    'text': text.text})
+                                                    'text': rendered})
 
 @require_addressing
 @require_chanop

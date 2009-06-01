@@ -139,6 +139,7 @@ class DjangoBot(irc.IRCClient):
     def joined(self, channel):
         print("[I have joined %s]" % channel)
         self.who(channel)
+        self.msg(channel, 'what up, meatbags')
 
     def PING(self):
         print 'PING %s' % self.servername

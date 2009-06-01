@@ -66,7 +66,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'example.urls'
 ROOT_MSGCONF = 'example'
 IRC_NICK = 'yardbird'
-IRC_CHANNELS = ( '#yardbird', '#birdland')
+IRC_CHANNELS = ( '#yardbird', '#birdland', '#dumont' )
 IRC_PRIVILEGED_CHANNEL = '#yardbird'
 
 
