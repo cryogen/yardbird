@@ -8,6 +8,7 @@ from twisted.internet import reactor, protocol, defer, threads, task
 from django.core import urlresolvers
 from django.utils.encoding import force_unicode
 from django.conf import settings
+from django.template.loader import render_to_string
 import logging
 
 import logging.handlers
@@ -29,17 +30,54 @@ if 'DJANGO_SETTINGS_MODULE' not in os.environ:
 class IRCRequest(object):
     def __init__(self, connection, user, channel, msg, method='privmsg',
                  **kwargs):
-        self.nick = connection.nickname
+        self.my_nick = connection.nickname
         self.chanmodes = connection.chanmodes
         self.user = user
-        self.user_nick = user.split('!', 1)[0]
+        self.nick = user.split('!', 1)[0]
         self.channel = channel
         self.message = force_unicode(msg)
-        self.method = method.lower()
+        self.method = method.upper()
         self.context = kwargs
+        self.addressed = False
+        if self.channel == self.my_nick:
+            self.addressed = True
+            self.reply_recipient = self.nick
+        else:
+            self.reply_recipient = self.channel
+
     def __str__(self):
         s = u'%s: <%s> %s' % (self.channel, self.user, self.message)
         return s.encode('utf-8')
+
+def render_to_response(recipient, template_name, dictionary={},
+                       context_instance=None, method='PRIVMSG'):
+    text = render_to_string(template_name, dictionary, context_instance)
+    dictionary['method'] = method
+    return IRCResponse(recipient, text, **dictionary)
+
+def render_to_reply(request, template_name, dictionary={},
+                    context_instance=None):
+    if request.channel != request.my_nick:
+        recipient = request.channel
+        dictionary['addressee'] = request.nick
+    else:
+        recipient = request.nick
+    return render_to_response(recipient, template_name, dictionary,
+                              context_instance, request.method)
+
+def render_silence(*args, **kwargs):
+    return IRCResponse('', '', 'QUIET')
+
+def render_quick_reply(request, template_name, dictionary={}):
+    dictionary.update(request.__dict__)
+    if request.channel != request.nick:
+        recipient = request.channel
+    else:
+        recipient = request.nick
+    return render_to_response(recipient, template_name, dictionary)
+
+def render_error(request, msg):
+    return IRCResponse(request.nick, msg, method='NOTICE')
 
 class IRCResponse(object):
     def __init__(self, recipient, data, method='PRIVMSG',
