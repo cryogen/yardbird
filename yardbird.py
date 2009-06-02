@@ -198,10 +198,11 @@ class DjangoBot(irc.IRCClient):
             self.dispatch(req)
     def irc_NICK(self, prefix, params):
         """Called when an IRC user changes their nickname."""
+        self.who(channel)
         old_nick = prefix.split('!')[0]
         new_nick = params[0]
         if self.nickname not in (old_nick, new_nick):
-            req = IRCRequest(self.nickname, old_nick, '', new_nick, 'nick')
+            req = IRCRequest(self, old_nick, '', new_nick, 'nick')
             self.dispatch(req)
 
 
