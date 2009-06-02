@@ -39,7 +39,7 @@ class IRCRequest(object):
         self.method = method.upper()
         self.context = kwargs
         self.addressed = False
-        if self.channel == self.my_nick:
+        if self.channel == self.my_nick or self.my_nick in self.message:
             self.addressed = True
             self.reply_recipient = self.nick
         else:
@@ -59,7 +59,6 @@ def render_to_reply(request, template_name, dictionary={},
                     context_instance=None):
     if request.channel != request.my_nick:
         recipient = request.channel
-        dictionary['addressee'] = request.nick
     else:
         recipient = request.nick
     return render_to_response(recipient, template_name, dictionary,
