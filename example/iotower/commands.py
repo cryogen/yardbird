@@ -1,4 +1,4 @@
-from example.privmsg import patterns
+from yardbird.ircresolvers import patterns
 
 urlpatterns = patterns('example.iotower.ircviews',
 (r"""^(?P<key>.*?)
