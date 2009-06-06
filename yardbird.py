@@ -8,9 +8,18 @@ if 'DJANGO_SETTINGS_MODULE' not in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'example.settings'
 
 if __name__ == '__main__':
+    import logging
     from twisted.internet import ssl
     from twisted.internet import reactor, protocol
-    from yardbird.bot import DjangoBot
+    from yardbird.bot import DjangoBot, log
+
+    # Configure up the logger
+    termlog = logging.StreamHandler()
+    termlog.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+    termlog.setFormatter(formatter)
+    log.addHandler(termlog)
+
 
     # SRSLY?  I set up a FACTORY and my bot class is its PROTOCOL and
     # then we pass my FACTORY and ANOTHER FACTORY into a REACTOR to run

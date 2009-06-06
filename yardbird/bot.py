@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import time
 import logging
 
 from twisted.words.protocols.irc import IRCClient
@@ -10,9 +9,11 @@ from django.conf import settings
 from irc import IRCRequest
 from shortcuts import reply
 
+log = logging.getLogger('yardbird')
+log.setLevel(logging.DEBUG)
 
 def terrible_error(failure, bot, request, *args, **kwargs):
-    logging.debug(failure)
+    log.debug(failure)
     e = str(failure.getErrorMessage())
     if 'path' in e and 'tried' in e:
         return reply(bot, request, 'Dude?')
@@ -20,7 +21,6 @@ def terrible_error(failure, bot, request, *args, **kwargs):
 
 class DjangoBot(IRCClient):
     def __init__(self):
-        logging.basicConfig(level=logging.DEBUG)
         self.methods = {'PRIVMSG': self.msg,
                         'ACTION':  self.me,
                         'NOTICE':  self.notice,
@@ -37,31 +37,28 @@ class DjangoBot(IRCClient):
 
     def myInfo(self, servername, version, umodes, cmodes):
         self.servername = servername
+        log.info("Connected to %s" % self.servername)
+        self.l = task.LoopingCall(self.PING)
+        self.l.start(60.0) # call every minute
     def connectionMade(self):
         self.nickname = self.factory.nickname
         IRCClient.connectionMade(self)
-        self.l = task.LoopingCall(self.PING)
-        self.l.start(60.0) # call every minute
-        logging.info("[connected at %s]" %
-                        time.asctime(time.localtime(time.time())))
     def connectionLost(self, reason):
         IRCClient.connectionLost(self, reason)
         self.l.stop() # All done now.
-        logging.info("[disconnected at %s]" %
-                        time.asctime(time.localtime(time.time())))
+        log.warn("Disconnected from %s" % self.servername)
     def signedOn(self):
         self.msg(self.nickname, 'Watching for my own hostmask')
         for channel in self.factory.channels:
             self.join(channel)
     def joined(self, channel):
-        logging.info("[I have joined %s]" % channel)
+        log.info("[I have joined %s]" % channel)
         self.who(channel)
         self.msg(channel, 'what up, meatbags')
 
     def PING(self):
-        if self.servername:
-            logging.debug('PING %s' % self.servername)
-            self.sendLine('PING %s' % self.servername)
+        log.debug('PING %s' % self.servername)
+        self.sendLine('PING %s' % self.servername)
     def who(self, channel):
         self.whoreplies[channel] = {}
         self.sendLine('WHO %s' % channel)
@@ -87,13 +84,13 @@ class DjangoBot(IRCClient):
         response = yield threads.deferToThread(callback, req, *args,
                                                **kwargs)
         if response.method == 'QUIET':
-            logging.info(response)
+            log.info(response)
             defer.returnValue(True)
         elif response.method == 'PRIVMSG':
             opts = {'length':
                     510 - len(':! PRIVMSG  :' + self.nickname +
                               response.recipient + self.hostmask)}
-            logging.info(response)
+            log.info(response)
         else:
             opts = {}
         defer.returnValue(
@@ -106,7 +103,7 @@ class DjangoBot(IRCClient):
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self, user, channel, msg, 'privmsg')
-            logging.info(req)
+            log.info(req)
             self.dispatch(req).addErrback(terrible_error, self, req)
         else:
             self.hostmask = user.split('!', 1)[1]

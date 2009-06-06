@@ -46,11 +46,9 @@ def trigger(request, key='', verb='', **kwargs):
     # Only be noisy about unknown factoids if addressed.
     if request.addressed:
         factoid = get_object_or_404(Factoid, fact__iexact=key)
-        addressee = request.nick
     else:
         try:
             factoid = Factoid.objects.get(fact__iexact=key)
-            addressee = ''
         except:
             return render_silence()
     try:
@@ -63,7 +61,7 @@ def trigger(request, key='', verb='', **kwargs):
     rendered = Template(text.text).render(context)
     return render_to_reply(request, 'factoid.irc',
                            {'factoid': key, 'verb': text.verb,
-                            'text': rendered, 'addressee': addressee})
+                            'text': rendered})
 
 @require_addressing
 @require_chanop
@@ -84,7 +82,7 @@ def literal(request, key='', **kwargs):
 
 @require_addressing
 def edit(request, key='', pattern='', replacement='', re_flags='',
-         addressee='', **kwargs):
+         **kwargs):
     flags = re.UNICODE
     count = 1
     if 'i' in re_flags:
@@ -106,8 +104,7 @@ def edit(request, key='', pattern='', replacement='', re_flags='',
             response.save()
             return render_to_reply(request, 'factoid.irc',
                                    {'factoid': key, 'verb': edited.verb,
-                                    'text': edited.text,
-                                    'addressee': addressee})
+                                    'text': edited.text})
     return render_error(request,
                         'No response in %s contained your pattern' % key)
 

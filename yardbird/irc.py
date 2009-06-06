@@ -13,12 +13,14 @@ class IRCRequest(object):
         self.message = force_unicode(msg)
         self.method = method.upper()
         self.context = kwargs
+        self.addressee = ''
         if self.channel == self.my_nick:
             self.addressed = True
             self.reply_recipient = self.nick
         elif self.my_nick.lower() in self.message.lower():
             self.addressed = True
             self.reply_recipient = self.channel
+            self.addressee = self.nick
         else:
             self.addressed = False
             self.reply_recipient = self.channel
