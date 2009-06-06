@@ -7,7 +7,7 @@ def render_to_response(recipient, template_name, dictionary={},
                        context_instance=None, method='PRIVMSG'):
     text = render_to_string(template_name, dictionary, context_instance)
     dictionary['method'] = method
-    return IRCResponse(recipient, text, **dictionary)
+    return IRCResponse(recipient, text.rstrip('\n'), **dictionary)
 
 def render_to_reply(request, template_name, dictionary={},
                     context_instance=None):

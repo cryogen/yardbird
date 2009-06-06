@@ -84,15 +84,15 @@ class DjangoBot(IRCClient):
         response = yield threads.deferToThread(callback, req, *args,
                                                **kwargs)
         if response.method == 'QUIET':
-            log.info(response)
+            log.debug(response)
             defer.returnValue(True)
         elif response.method == 'PRIVMSG':
             opts = {'length':
                     510 - len(':! PRIVMSG  :' + self.nickname +
                               response.recipient + self.hostmask)}
-            log.info(response)
         else:
             opts = {}
+        log.info(response)
         defer.returnValue(
             self.methods[response.method](response.recipient,
                                           response.data.encode('UTF-8'),
