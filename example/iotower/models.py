@@ -38,3 +38,16 @@ class FactoidResponse(models.Model):
                                              self.text)
     class Meta:
         unique_together = ("fact", "verb", "text", "created")
+
+def my_handler(sender, **kwargs):
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+    print("SIGNALLLLL")
+    pp.pprint(sender)
+    pp.pprint(kwargs)
+
+from django.core.signals import request_started, request_finished, got_request_exception
+
+request_started.connect(my_handler)
+request_finished.connect(my_handler)
+got_request_exception.connect(my_handler)

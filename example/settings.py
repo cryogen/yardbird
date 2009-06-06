@@ -68,6 +68,7 @@ ROOT_MSGCONF = 'example'
 IRC_NICK = 'yardbird'
 IRC_CHANNELS = ( '#yardbird', '#birdland', '#dumont' )
 IRC_PRIVILEGED_CHANNEL = '#yardbird'
+IRC_SERVERS = ( ("irc.slashnet.org", 6697), )
 
 
 TEMPLATE_DIRS = (

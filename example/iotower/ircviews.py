@@ -5,8 +5,9 @@ from django import http
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.template import Template, Context
-from yardbird import IRCResponse, render_to_response, render_to_reply
-from yardbird import render_silence, render_error, render_quick_reply
+from yardbird.irc import IRCResponse
+from yardbird.shortcuts import render_to_response, render_to_reply
+from yardbird.shortcuts import render_silence, render_error, render_quick_reply
 
 def require_addressing(function):
     def new(request, *args, **kwargs):
