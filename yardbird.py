@@ -38,11 +38,14 @@ class IRCRequest(object):
         self.message = force_unicode(msg)
         self.method = method.upper()
         self.context = kwargs
-        self.addressed = False
-        if self.channel == self.my_nick or self.my_nick in self.message:
+        if self.channel == self.my_nick:
             self.addressed = True
             self.reply_recipient = self.nick
+        elif self.my_nick.lower() in self.message.lower():
+            self.addressed = True
+            self.reply_recipient = self.channel
         else:
+            self.addressed = False
             self.reply_recipient = self.channel
 
     def __str__(self):
@@ -57,23 +60,17 @@ def render_to_response(recipient, template_name, dictionary={},
 
 def render_to_reply(request, template_name, dictionary={},
                     context_instance=None):
-    if request.channel != request.my_nick:
-        recipient = request.channel
-    else:
-        recipient = request.nick
-    return render_to_response(recipient, template_name, dictionary,
-                              context_instance, request.method)
+    return render_to_response(request.reply_recipient, template_name,
+                              dictionary, context_instance,
+                              request.method)
 
 def render_silence(*args, **kwargs):
     return IRCResponse('', '', 'QUIET')
 
 def render_quick_reply(request, template_name, dictionary={}):
     dictionary.update(request.__dict__)
-    if request.channel != request.nick:
-        recipient = request.channel
-    else:
-        recipient = request.nick
-    return render_to_response(recipient, template_name, dictionary)
+    return render_to_response(request.reply_recipient, template_name,
+                              dictionary)
 
 def render_error(request, msg):
     return IRCResponse(request.nick, msg, method='NOTICE')
