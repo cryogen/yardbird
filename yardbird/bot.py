@@ -8,6 +8,7 @@ from django.conf import settings
 
 from irc import IRCRequest
 from shortcuts import reply
+from signals import request_started, request_finished
 
 log = logging.getLogger('yardbird')
 log.setLevel(logging.DEBUG)
@@ -81,8 +82,11 @@ class DjangoBot(IRCClient):
         resolver = urlresolvers.get_resolver('.'.join(
             (settings.ROOT_MSGCONF, req.method.lower())))
         callback, args, kwargs = yield resolver.resolve('/' + req.message)
+        request_started.send(sender=self, request=req)
         response = yield threads.deferToThread(callback, req, *args,
                                                **kwargs)
+        request_finished.send(sender=self, request=req,
+                              response=response)
         if response.method == 'QUIET':
             log.debug(response)
             defer.returnValue(True)
