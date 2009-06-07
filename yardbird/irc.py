@@ -24,18 +24,16 @@ class IRCRequest(object):
         else:
             self.addressed = False
             self.reply_recipient = self.channel
-    def __str__(self):
-        s = u'%s: <%s> %s' % (self.channel, self.user, self.message)
-        return s.encode('utf-8')
+    def __unicode__(self):
+        return u'%s: <%s> %s' % (self.channel, self.user, self.message)
 
 
 class IRCResponse(object):
     def __init__(self, recipient, data, method='PRIVMSG',
                  **kwargs):
         self.recipient = recipient
-        self.data = data
+        self.data = force_unicode(data)
         self.method = method
         self.context = kwargs
-    def __str__(self):
-        s = u'%s: <%s> %s' % (self.method, self.recipient, self.data)
-        return s.encode('utf-8')
+    def __unicode__(self):
+        return u'%s: <%s> %s' % (self.method, self.recipient, self.data)

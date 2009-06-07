@@ -96,7 +96,7 @@ class DjangoBot(IRCClient):
                               response.recipient + self.hostmask)}
         else:
             opts = {}
-        log.info(response)
+        log.info(unicode(response))
         defer.returnValue(
             self.methods[response.method](response.recipient,
                                           response.data.encode('UTF-8'),
@@ -107,7 +107,7 @@ class DjangoBot(IRCClient):
     def privmsg(self, user, channel, msg):
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self, user, channel, msg, 'privmsg')
-            log.info(req)
+            log.info(unicode(req))
             self.dispatch(req).addErrback(terrible_error, self, req)
         else:
             self.hostmask = user.split('!', 1)[1]

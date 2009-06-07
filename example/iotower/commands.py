@@ -13,12 +13,12 @@ urlpatterns = patterns('example.iotower.ircviews',
   'trigger'),
  (r"""^what \s+ (?P<verb>\w+) \s+ (?P<key>.*?) \W*$""", 'trigger'),
 
- (r"""^(?P<key>.*) \s+ (?P<verb>is|are) \s+ (?P<also>also\s+)? 
+ (r"""^(?P<key>.*) \s+ (?P<verb>is|are) \s+ (?P<also>also\s+)?
+  (?P<tag><[^>]+>\s+)? (?P<value>\S+.*) \W*$""", 'learn'),
+ (r"""^(?P<key>.*?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+
+  (?P<tag><[^>]+>\s+)? (?P<value>\S+.*) \W*$""", 'learn'),
+ (r"""^(?P<key>.*)'s \s+ (?P<also>also\s+)? (?P<tag><[^>]+>\s+)?
   (?P<value>\S+.*) \W*$""", 'learn'),
- (r"""^(?P<key>.*?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+ 
-  (?P<value>\S+.*) \W*$""", 'learn'),
- (r"""^(?P<key>.*)'s \s+ (?P<also>also\s+)? (?P<value>\S+.*) \W*$""",
-  'learn'),
 
  (r"""^literal \s+ (?P<key>.+?) \W*$""", 'literal'),
 

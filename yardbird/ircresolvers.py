@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# XXX: this should be replaced with stock urlresolvers using (?iLmsux)
+# stuff at the front of individual regexes instead!
+
 import re
 
 from django.core.urlresolvers import RegexURLPattern, RegexURLResolver

@@ -31,13 +31,15 @@ def require_chanop(function):
     return new
 
 #@require_addressing
-def learn(request, key='', verb='is', value='', also='', **kwargs):
+def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(fact=key.lower())
     if not created and factoid.protected:
         raise Exception, 'That factoid is protected!'
     elif also or created:
+        if tag:
+            tag = tag.lstrip('<').rstrip().rstrip('>')
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
-                                  created_by=request.nick)
+                                  tag=tag, created_by=request.nick)
         factext.save()
         return render_quick_reply(request, "ack.irc")
     return render_quick_reply(request, "sorry.irc")
@@ -57,11 +59,18 @@ def trigger(request, key='', verb='', **kwargs):
     except IndexError:
         #FIXME: this is just for testing
         text = factoid.factoidresponse_set.order_by("?")[0]
+    if not text.tag:
+        template = 'factoid.irc'
+    else:
+        template = 'factoid-%s.irc' % text.tag
     context = Context(request.__dict__)
     rendered = Template(text.text).render(context)
-    return render_to_reply(request, 'factoid.irc',
-                           {'factoid': key, 'verb': text.verb,
-                            'text': rendered})
+    d = {'factoid': key, 'verb': text.verb, 'text': rendered}
+    if text.tag == 'action':
+        return render_to_response(request.reply_recipient, template, d,
+                                  method='ACTION')
+    else:
+        return render_to_reply(request, template, d)
 
 @require_addressing
 @require_chanop
@@ -76,9 +85,11 @@ def literal(request, key='', **kwargs):
             text += ' =%s= ' % verb
         else:
             text += '|'
+        if response.tag:
+            text += '<%s> ' % response.tag
         text += '%s' % response.text
 
-    return IRCResponse(request.reply_recipient, unicode(text))
+    return IRCResponse(request.reply_recipient, text)
 
 @require_addressing
 def edit(request, key='', pattern='', replacement='', re_flags='',

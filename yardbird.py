@@ -16,7 +16,6 @@ if __name__ == '__main__':
     # Configure up the logger
     termlog = logging.StreamHandler()
     termlog.setLevel(logging.INFO)
-    #termlog.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
     termlog.setFormatter(formatter)
     log.addHandler(termlog)
