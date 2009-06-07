@@ -15,9 +15,8 @@ urlpatterns = patterns('example.iotower.ircviews',
 
  (r"""^(?P<key>.*) \s+ (?P<verb>is|are) \s+ (?P<also>also\s+)? 
   (?P<value>\S+.*) \W*$""", 'learn'),
- (r"""^(?P<key>.*) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+ 
-  (?P<value>\S+.*) \W*$""",
-  'learn'),
+ (r"""^(?P<key>.*?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+ 
+  (?P<value>\S+.*) \W*$""", 'learn'),
  (r"""^(?P<key>.*)'s \s+ (?P<also>also\s+)? (?P<value>\S+.*) \W*$""",
   'learn'),
 
