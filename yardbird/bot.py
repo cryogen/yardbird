@@ -6,14 +6,17 @@ from twisted.internet import defer, threads, task
 from django.core import urlresolvers
 from django.conf import settings
 
-from irc import IRCRequest
-from shortcuts import reply
+from irc import IRCRequest, IRCResponse
 from signals import request_started, request_finished
 
 log = logging.getLogger('yardbird')
 log.setLevel(logging.DEBUG)
 
 def terrible_error(failure, bot, request, *args, **kwargs):
+    def reply(bot, request, message, *args, **kwargs):
+        recipient = request.reply_recipient
+        res = IRCResponse(recipient, message % kwargs, method='NOTICE')
+        return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
     log.debug(failure)
     e = str(failure.getErrorMessage())
     if 'path' in e and 'tried' in e:

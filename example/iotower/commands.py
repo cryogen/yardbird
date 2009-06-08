@@ -23,5 +23,6 @@ urlpatterns = patterns('example.iotower.ircviews',
  (r"""^literal \s+ (?P<key>.+?) \W*$""", 'literal'),
 
  (r"""^(?P<key>.+?) \W*$""", 'trigger'),
+ (r"""^(?P<key>.*)""", 'trigger')
 )
 

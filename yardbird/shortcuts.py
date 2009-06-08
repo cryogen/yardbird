@@ -31,11 +31,3 @@ def render_silence(*args, **kwargs):
 
 def render_error(request, msg):
     return IRCResponse(request.nick, msg, method='NOTICE')
-
-# This doesn't seem to belong here, and may only be useful as a function
-# in the errorback's scope. Note also how it duplicates some of
-# render_error.  
-def reply(bot, request, message, *args, **kwargs):
-    recipient = request.user.split('!', 1)[0]
-    res = IRCResponse(recipient, message % kwargs, method='NOTICE')
-    return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
