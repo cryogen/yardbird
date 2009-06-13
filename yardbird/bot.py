@@ -82,14 +82,21 @@ class DjangoBot(IRCClient):
         """This method abuses the django url resolver to detect
         interesting messages and dispatch them to callback functions
         based on regular expression matches."""
+        def asynchronous_work(request, args, kwargs):
+            """This function runs in a separate thread, as the signal
+            handlers and callback functions may take forever and a day
+            to execute."""
+            request_started.send(sender=self, request=request)
+            response = callback(req, *args, **kwargs)
+            request_finished.send(sender=self, request=request,
+                                  response=response)
+            return response
+
         resolver = urlresolvers.get_resolver('.'.join(
             (settings.ROOT_MSGCONF, req.method.lower())))
         callback, args, kwargs = yield resolver.resolve('/' + req.message)
-        request_started.send(sender=self, request=req)
-        response = yield threads.deferToThread(callback, req, *args,
-                                               **kwargs)
-        request_finished.send(sender=self, request=req,
-                              response=response)
+        response = yield threads.deferToThread(asynchronous_work, req,
+                                               args, kwargs)
         if response.method == 'QUIET':
             log.debug(response)
             defer.returnValue(True)
