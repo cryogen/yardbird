@@ -25,10 +25,11 @@ def terrible_error(failure, bot, request, *args, **kwargs):
 
 class DjangoBot(IRCClient):
     def __init__(self):
-        self.methods = {'PRIVMSG': self.msg,
-                        'ACTION':  self.me,
-                        'NOTICE':  self.notice,
-                        'TOPIC':   self.topic,
+        self.methods = {'PRIVMSG':  self.msg,
+                        'ACTION':   self.me,
+                        'NOTICE':   self.notice,
+                        'TOPIC':    self.topic,
+                        'RESET':    self.reimport,
                        }
         self.chanmodes = {}
         self.whoreplies = {}
@@ -112,6 +113,17 @@ class DjangoBot(IRCClient):
                                           response.data.encode('UTF-8'),
                                           **opts))
 
+    def reimport(self, recipient, data, **kwargs):
+        import sys
+        for modname, module in sys.modules.iteritems():
+            # We reload yardbird library code as well as all known
+            # django apps.
+            for app in ['yardbird.'] + settings.INSTALLED_APPS:
+                if module and modname.startswith(app):
+                    reload(module)
+                    break # On to next module
+        urlresolvers.clear_url_caches() # Drop stale references to apps 
+        self.notice(recipient, data)
     def noticed(self, *args, **kwargs):
         pass # We're automatic for the people
     def privmsg(self, user, channel, msg):

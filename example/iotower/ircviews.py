@@ -30,6 +30,12 @@ def require_chanop(function):
                 'You lack the necessary privileges to use this command.')
     return new
 
+@require_addressing
+@require_chanop
+def reimport(request, *args, **kwargs):
+    return IRCResponse(request.reply_recipient, 'Reload successful.',
+                       method='RESET')
+
 #@require_addressing
 def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(fact=key.lower())
