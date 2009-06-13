@@ -17,7 +17,7 @@ def terrible_error(failure, bot, request, *args, **kwargs):
         recipient = request.reply_recipient
         res = IRCResponse(recipient, message % kwargs, method='NOTICE')
         return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
-    log.debug(failure)
+    log.warn(failure)
     e = str(failure.getErrorMessage())
     if 'path' in e and 'tried' in e:
         return reply(bot, request, 'Dude?')

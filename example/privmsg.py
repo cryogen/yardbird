@@ -1,8 +1,6 @@
-from django.conf.urls.defaults import include
-from yardbird.ircresolvers import patterns
-
+from django.conf.urls.defaults import include, patterns
 
 urlpatterns = patterns('',
-                       (r'^\W*(?:(?P<addressee>\S+):\s+)?',
+                       (r'(?iux)^\W*(?:(?P<addressee>\S+):\s+)?',
                         include('example.iotower.commands')),
                       )
