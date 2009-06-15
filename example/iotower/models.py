@@ -1,4 +1,7 @@
+import re
+
 from django.db import models
+from yardbird.signals import request_started, request_finished
 
 # Never quite figured out what bucket did with these, but they're fun!
 # This may be the sort of thing we keep in a factoid or otherwise in the
@@ -43,3 +46,14 @@ class FactoidResponse(models.Model):
                                              self.text)
     class Meta:
         unique_together = ("fact", "verb", "text", "created")
+
+# Demonstration of a signal handler designed to detect 242 sightings.
+auspicious_re = re.compile(r'2\D*4\D*2')
+
+def sighting(sender, **kwargs):
+    if 'request' in kwargs:
+        req = kwargs['request']
+        if auspicious_re.search(req.message):
+            sender.notice(req.reply_recipient, '242 sighting!')
+
+request_started.connect(sighting)
