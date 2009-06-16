@@ -43,7 +43,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         raise Exception, 'That factoid is protected!'
     elif also or created:
         if tag:
-            tag = tag.strip('<>').strip()
+            tag = tag.strip().strip('<>')
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
                                   tag=tag, created_by=request.nick)
         factext.save()
