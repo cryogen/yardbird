@@ -8,7 +8,10 @@ class IRCRequest(object):
         self.my_nick = connection.nickname
         self.chanmodes = connection.chanmodes
         self.user = user
-        self.nick = user.split('!', 1)[0]
+        if '!' in user:
+            self.nick, self.mask = user.split('!', 1)
+        else:
+            self.nick, self.mask = user, None
         self.channel = channel
         self.message = force_unicode(msg)
         self.method = method.upper()

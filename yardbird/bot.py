@@ -34,11 +34,15 @@ class DjangoBot(IRCClient):
         self.chanmodes = {}
         self.whoreplies = {}
         self.hostmask = '' # until we see ourselves speak, we do not know
-        self.versionName = 'yardbird'
-        self.sourceURL = 'http://zork.net/~nick/yardbird/'
-        self.realname = 'YardBird'
-        self.lineRate = 1
         self.servername = ''
+        self.lineRate = 1
+
+        self.versionName = 'Yardbird'
+        self.versionNum = 'Ah-Leu-Cha'
+        self.versionEnv = 'Django'
+        self.sourceURL = 'http://zork.net/~nick/yardbird/ '
+        self.realname = 'Charlie Parker Jr.'
+        self.fingerReply = 'Trollabye in Birdland'
 
     def myInfo(self, servername, version, umodes, cmodes):
         self.servername = servername
@@ -60,23 +64,45 @@ class DjangoBot(IRCClient):
         log.info("[I have joined %s]" % channel)
         self.who(channel)
         self.msg(channel, 'what up, meatbags')
-
     def PING(self):
         log.debug('PING %s' % self.servername)
         self.sendLine('PING %s' % self.servername)
+
     def who(self, channel):
-        self.whoreplies[channel] = {}
-        self.sendLine('WHO %s' % channel)
+        self.whoreplies[channel.lower()] = {}
+        self.sendLine('WHO %s' % channel.lower())
     def irc_RPL_WHOREPLY(self, prefix, args):
         me, chan, uname, host, server, nick, modes, name = args
-        mask = '%s!%s@%s' % (nick, uname, host)
-        self.whoreplies[chan][mask] = modes
+        mask = '%s@%s' % (uname, host)
+        self.whoreplies[chan.lower()][mask] = modes
     def irc_RPL_ENDOFWHO(self, prefix, args):
-        channel = args[1]
+        channel = args[1].lower()
         self.chanmodes[channel] = self.whoreplies[channel]
-    def modeChanged(self, user, chan, setp, modes, args):
-        self.who(chan)
+    def invalidate_chanmodes(self, user, channel, *args, **kwargs):
+        """Some functions just need to get a new listing of users and
+        mode flags"""
+        self.who(channel)
+    modeChanged = invalidate_chanmodes
+    userJoined = invalidate_chanmodes
+    userLeft = invalidate_chanmodes
 
+    def userKicked(self, kickee, channel, kicker, message):
+        channel = channel.lower()
+        nick, mask = kickee.split('!', 1)
+        kicker_nick, kicker_mask = kicker.split('!', 1)
+        # Remove the kickee from our chanmodes dictionaries
+        if mask in self.chanmodes[channel]:
+            del(self.chanmodes[channel][mask])
+        if self.nickname not in (nick, kicker_nick):
+            req = IRCRequest(self, kicker_nick, channel, message,
+                             'kick', kickee=kickee)
+            self.dispatch(req)
+
+    def userQuit(self, user, message):
+        mask = user.split('!', 1)[1]
+        for channel in self.chanmodes:
+            if mask in self.chanmodes[channel]:
+                del(self.chanmodes[channel][mask])
 
     @defer.inlineCallbacks
     def dispatch(self, req):
@@ -124,26 +150,29 @@ class DjangoBot(IRCClient):
                     break # On to next module
         urlresolvers.clear_url_caches() # Drop stale references to apps 
         self.notice(recipient, data)
-    def noticed(self, *args, **kwargs):
-        pass # We're automatic for the people
-    def privmsg(self, user, channel, msg):
+    def dispatchable_event(self, user, channel, msg, method):
         if user.split('!', 1)[0] != self.nickname:
-            req = IRCRequest(self, user, channel, msg, 'privmsg')
+            req = IRCRequest(self, user, channel, msg, method)
             log.info(unicode(req))
             self.dispatch(req).addErrback(terrible_error, self, req)
         else:
             self.hostmask = user.split('!', 1)[1]
+
+    def noticed(self, *args, **kwargs):
+        pass # We're automatic for the people
+    def privmsg(self, user, channel, msg):
+        return self.dispatchable_event(user, channel, msg, 'privmsg')
     def action(self, user, channel, msg):
-        """This will get called when the bot sees someone do an action."""
-        if user.split('!', 1)[0] != self.nickname:
-            req = IRCRequest(self, user, channel, msg, 'action')
-            self.dispatch(req)
-    def irc_NICK(self, prefix, params):
+        return self.dispatchable_event(user, channel, msg, 'action')
+    def topicUpdated(self, user, channel, msg):
+        return self.dispatchable_event(user, channel, msg, 'topic')
+    def irc_NICK(self, user, params):
         """Called when an IRC user changes their nickname."""
-        #self.who(channel)
-        old_nick = prefix.split('!')[0]
+        old_nick, mask = user.split('!', 1)
         new_nick = params[0]
         if self.nickname not in (old_nick, new_nick):
-            req = IRCRequest(self, old_nick, '', new_nick, 'nick')
-            self.dispatch(req)
+            for channel in self.chanmodes:
+                if mask in self.chanmodes[channel]:
+                    return self.dispatchable_event(user, channel,
+                                                   new_nick, 'nick')
 

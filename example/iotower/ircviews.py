@@ -23,8 +23,8 @@ def require_addressing(function):
 def require_chanop(function):
     def new(request, *args, **kwargs):
         chan = settings.IRC_PRIVILEGED_CHANNEL
-        if request.user in request.chanmodes[chan]:
-            if '@' in request.chanmodes[chan][request.user]:
+        if request.mask in request.chanmodes[chan]:
+            if '@' in request.chanmodes[chan][request.mask]:
                 return function(request, *args, **kwargs)
         return render_error(request,
                 'You lack the necessary privileges to use this command.')
@@ -43,7 +43,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         raise Exception, 'That factoid is protected!'
     elif also or created:
         if tag:
-            tag = tag.lstrip('<').rstrip().rstrip('>')
+            tag = tag.strip('<>').strip()
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
                                   tag=tag, created_by=request.nick)
         factext.save()
@@ -73,10 +73,11 @@ def trigger(request, key='', verb='', **kwargs):
     rendered = Template(text.text).render(context)
     d = {'factoid': key, 'verb': text.verb, 'text': rendered}
     if text.tag == 'action':
-        return render_to_response(request.reply_recipient, template, d,
-                                  method='ACTION')
+        method='ACTION'
     else:
-        return render_to_reply(request, template, d)
+        method='PRIVMSG'
+    return render_to_response(request.reply_recipient, template, d,
+                              method=method)
 
 @require_addressing
 @require_chanop
