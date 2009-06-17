@@ -12,6 +12,8 @@ from signals import request_started, request_finished
 log = logging.getLogger('yardbird')
 log.setLevel(logging.DEBUG)
 
+VERSION = 'Ah.Leu.Cha'
+
 def terrible_error(failure, bot, request, *args, **kwargs):
     def reply(bot, request, message, *args, **kwargs):
         recipient = request.reply_recipient
@@ -38,7 +40,7 @@ class DjangoBot(IRCClient):
         self.lineRate = 1
 
         self.versionName = 'Yardbird'
-        self.versionNum = 'Ah-Leu-Cha'
+        self.versionNum = VERSION
         self.versionEnv = 'Django'
         self.sourceURL = 'http://zork.net/~nick/yardbird/ '
         self.realname = 'Charlie Parker Jr.'
