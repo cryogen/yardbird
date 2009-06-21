@@ -59,6 +59,24 @@ project as an application, like so::
 
 Now you're ready to write some IRC dispatchers and views!
 
+How to Run
+==========
+
+The ``yardbird`` app inculdes a ``runircbot`` management command, so that
+you can simply::
+
+	./manage.py runircbot
+
+and it will connect via SSL according to the following variables from
+``settings.py``:
+
+	:IRC_NICK:	The bot's desired nickname.  The server may set the
+			bot to an alternate nick if the desired one is in
+			use.
+	:IRC_CHANNELS:	A list of channels to join on connection.
+	:IRC_SERVERS:	A tuple of 2-tuples containing server hostname and
+			connecting SSL port.
+
 How to Code for Yardbird
 ========================
 
@@ -87,11 +105,13 @@ The key dispatchable events are as follows:
 
 Typical bots are only interested in the ``privmsg`` and possibly ``action``
 events.  As an example, a bot that wished to treat them both the same would
-create a ``privmsg.py`` with a standard Django ``urlpatterns`` structure,
+create a ``privmsg.py`` in the directory specified by
+``settings.ROOT_MSGCONF`` with a standard Django ``urlpatterns`` structure,
 and would then symlink ``actions.py`` to the privmsg dispatcher.
 
 It is recommended that you keep IRC-specific views in a separate package.
 The Yardbird maintainers use ``ircviews.py``, but anything will do.
+
 
 Request and Response Objects
 ----------------------------
