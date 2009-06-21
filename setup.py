@@ -11,5 +11,5 @@ setup(
     author="Nick Moffitt",
     author_email="nick@zork.net",
     url="http://zork.net/~nick/yardbird/",
-    packages=['yardbird'],
+    packages=['yardbird', 'yardbird.management', 'yardbird.management.commands'],
 )
