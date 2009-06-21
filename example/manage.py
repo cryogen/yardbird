@@ -1,4 +1,7 @@
 #!/usr/bin/python
+import os, sys
+sys.path.append(os.path.dirname(os.getcwd()))
+
 from django.core.management import execute_manager
 try:
     import settings # Assumed to be in the same directory.
