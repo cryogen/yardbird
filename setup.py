@@ -6,7 +6,7 @@ from yardbird.bot import VERSION
 
 setup(
     name="yardbird",
-    version=VERSION,
+    version=VERSION.replace('-',''),
     description="YardBird, a Django-based chat bot system.",
     author="Nick Moffitt",
     author_email="nick@zork.net",
