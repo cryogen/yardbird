@@ -47,8 +47,11 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
                                   tag=tag, created_by=request.nick)
         factext.save()
-        return render_quick_reply(request, "ack.irc")
-    return render_quick_reply(request, "sorry.irc")
+        if request.addressed:
+            return render_quick_reply(request, "ack.irc")
+    if request.addressed:
+        return render_quick_reply(request, "sorry.irc")
+    return render_silence()
 
 def trigger(request, key='', verb='', **kwargs):
     # Only be noisy about unknown factoids if addressed.
