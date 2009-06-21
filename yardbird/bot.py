@@ -223,7 +223,6 @@ class DjangoBot(IRCClient):
     def irc_QUIT(self, user, message):
         """Users who quit must be removed from all channel mode
         records."""
-        channel = channel.lower()
         mask = user.split('!', 1)[1]
         for channel in self.chanmodes:
             if mask in self.chanmodes[channel]:
