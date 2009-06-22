@@ -2,11 +2,11 @@
 
 from distutils.core import setup
 
-from yardbird.bot import VERSION
+from yardbird.version import VERSION
 
 setup(
     name="yardbird",
-    version=VERSION.replace('-',''),
+    version=VERSION.replace('-','').lower(),
     description="YardBird, a Django-based chat bot system.",
     author="Nick Moffitt",
     author_email="nick@zork.net",

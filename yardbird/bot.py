@@ -11,11 +11,10 @@ from django.conf import settings
 
 from irc import IRCRequest, IRCResponse
 from signals import request_started, request_finished
+from version import VERSION
 
 log = logging.getLogger('yardbird')
 log.setLevel(logging.DEBUG)
-
-VERSION = 'Ah-Leu-Cha'
 
 def terrible_error(failure, bot, request, *args, **kwargs):
     """FIXME: This errback function is likely more terrible than the
