@@ -1,0 +1,106 @@
+Yardbird Target Document
+version 0.01
+
+Sections:
+
+1. Yardbird
+2. Iotower
+3. Other Yardbird Apps
+
+
+1. YARDBIRD:
+
+GENERAL TODO:
+
+* add comments to regexes in commands.py
+	* does order matter? I assume so. explain order reasoning.
+* comments to the general code would be nice.
+
+OPEN DESIGN QUESTIONS:
+
+* what's the best way to handle "tags"?
+* how should we handle aliasing?
+	* suggested f->r->f reference which opens future possibilities
+
+STILL TO BE IMPLEMENTED:
+
+* ignore
+* unignore
+* list_ignored
+* netsplit handling
+* additional event handling:
+	* topic
+	* others?
+
+PACKAGING:
+
+* two packages, one just yardbird, one with iotower
+* includes manage.py script for installing yardbird
+
+2. IOTOWER:
+
+TO BE IMPLEMENTED:
+
+* forget
+* undo:
+	* undo-delete
+	* undo-insert
+	* undo-edit
+* redo:
+	* redo-delete
+	* redo-insert
+	* redo-edit
+* protect factoid
+* unprotect_factoid
+* alias factoid
+* unalias factoid
+* search
+
+OTHER FEATURES?:
+
+* bot "personalities", e.g. "it is only by the grace of the users"
+
+YARDBIRD HAS; INFOBOT LACKS (gee whiz factor):
+
+* =verb= as in pedro =loves= tacos
+	* what does pedro love? (tacos).
+* context: stabs {{nick}}
+
+INFOBOT HAS; YARDBIRD LACKS (potential gripes):
+
+* "also" adds to response set, not adds "and" clause to single response
+	* present in dumont for some time
+* no you/your/my substitution
+	* thank gord
+* 07:20 <@SpaceHobo> although part of the fun is factoids we've
+	hammered into dumont that assume that words like 'where' and 'wtf' and
+	'who' are all the same and are removed
+	* what is this?
+* different regex behavior for editing
+	* no big deal
+* what gotchas are out there that people may not like?
+
+POLICY QUESTIONS:
+
+* you must address the bot to delete (forget) a factoid
+* different permissions issues
+	* do you need trust to delete or edit, for example?
+* protected factoids 
+* undo/redo
+* what other policy changes?
+* probably should protect tell and vox by policy as well
+
+OTHER QUESTIONS:
+
+* do we have an auto-response threshold by factoid length?
+
+3. OTHER YARDBIRD APPLICATIONS SEPARATE FROM IOTOWER:
+
+* "seen" application
+* botsnack
+* stats
+* yow, tom, etc.
+* "..." crickets module
+* tell
+* vox puppetting
+
