@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 
-from iotower.version import sdist_ver
+from version import sdist_ver
 
 setup(
     name="iotower",
@@ -12,7 +12,9 @@ setup(
     author_email="nick@zork.net",
     license="GPL",
     url="http://zork.net/~nick/yardbird/iotower/",
+    package_dir={'iotower': '.'},
     packages=['iotower'],
+    package_data={'iotower': ['templates/*.irc']},
 )
 
 

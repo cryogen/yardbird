@@ -84,5 +84,5 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'yardbird',
-    'example.iotower',
+    'iotower',
 )
