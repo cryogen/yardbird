@@ -1,7 +1,21 @@
 import re
 
 from django.db import models
-from yardbird.signals import request_started, request_finished
+
+try:
+    from yardbird.signals import request_started, request_finished
+except:
+    print """ ***** NOTA BENE *****
+The IOTower app is written for Yardbird, which is a chat bot system
+for Django.  It is not generally useful from the Web, and as such you
+almost certainly want to install Yardbird into your PYTHONPATH before
+proceeding.  
+
+To acquire Yardbird, visit:
+    http://zork.net/~nick/yardbird/
+or for source tarballs and packages, go to:
+    http://zork.net/pub/yardbird/"""
+    raise
 
 # Never quite figured out what bucket did with these, but they're fun!
 # This may be the sort of thing we keep in a factoid or otherwise in the
