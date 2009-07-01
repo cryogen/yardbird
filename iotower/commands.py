@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import patterns
 
-urlpatterns = patterns('example.iotower.ircviews',
+urlpatterns = patterns('iotower.ircviews',
 (r"""(?iux)^(?P<key>.*?)
  \s+ =~ \s+
  s(?P<sep>[^\w\s]) (?P<pattern>.*) (?P=sep) (?P<replacement>.*)
