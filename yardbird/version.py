@@ -1,4 +1,4 @@
-VERSION = 'Ah-Leu-Cha'
+VERSION = 'An Oscar for Treadwell'
 TARGET = '0.1'
 
 def sdist_ver():
