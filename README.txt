@@ -8,7 +8,7 @@ A Django-based Chat Bot System
 
 ::
 
-	     __//  (Ah-Leu-Cha!)
+	     __//  (An Oscar for Treadwell)
 	cf  /.__.\ /
 	    \ \/ /
 	 '__/    \
@@ -29,8 +29,24 @@ Django models and templates in your bot.
 How to Get It
 =============
 
-At the moment, Yardbird is only available over the bazaar_ revision control
-system.  To get a copy for yourself, simply run::
+The latest source tarballs can be downloaded from
+http://zork.net/pub/yardbird/ and binary packages are kept in the ``debs/``
+subdirectory. 
+
+For the brave, there is an unsigned apt repository containing the yardbird
+binary debs.  To use it, add the following to your ``sources.list``::
+
+	deb http://zork.net/yardbird/archive hardy main
+
+This will give you access to the ``python-django-yardbird`` and
+``python-yardbird-iotower`` packages.
+
+How to Develop It
+-----------------
+
+Development of both the Yardbird chatbot system and the IOTower example app
+is done from a single bazaar_ tree.  To get access to the development tree,
+simply run::
 
 	bzr branch http://zork.net/~nick/yardbird/
 
@@ -43,8 +59,8 @@ How to Install
 ==============
 
 Either use the provided ``setup.py`` to install the ``yardbird/`` package
-into your `PYTHONPATH`, or copy/link the yardbird/ tree directly into your
-project as an application, like so::
+into your ``PYTHONPATH``, or copy/link the yardbird/ tree directly into
+your project as an application, like so::
 
 	example/
 	|-- __init__.py
