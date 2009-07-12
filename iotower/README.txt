@@ -1,8 +1,13 @@
+=======
 IOTower
 =======
 
+-----------------------------------------
 An Infobot Replacement Inspired by Bucket
 -----------------------------------------
+
+How Bucket Did It
+=================
 
 My survey of bucket turned up the following public functions:
 
