@@ -91,7 +91,7 @@ def literal(request, key='', **kwargs):
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
     text = key
     verb = ''
-    for response in responses.order_by('verb'):
+    for response in responses.order_by('verb', 'created'):
         if response.verb != verb:
             verb = response.verb
             text += ' =%s= ' % verb
