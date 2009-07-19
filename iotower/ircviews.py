@@ -168,7 +168,8 @@ def delete(request, key='', pattern='', re_flags='', **kwargs):
 
     not_deleted = (Q(disabled__exact=None),)
     deleted = regex_operation_on_factoid(key, pattern, re_flags,
-            not_deleted, delete_response, multiple=True)
+            not_deleted, delete_response, multiple=True,
+            sort_field='-created')
     if not deleted:
         return render_error(
                 request, 'No response in %s contained your pattern' % key)
