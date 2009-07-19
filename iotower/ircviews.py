@@ -115,11 +115,11 @@ def get_factoid_and_pattern(key, pattern, re_flags):
     return factoid, pat, count
 
 def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
-        multiple=False, sort_field=None):
+        multiple=False, sort_fields=[]):
     factoid, pat, count = get_factoid_and_pattern(key, pattern, re_flags)
     responses = factoid.factoidresponse_set.filter(*queries)
-    if sort_field:
-        responses = responses.order_by(sort_field)
+    if sort_fields:
+        responses = responses.order_by(*sort_fields)
     ret = []
     for response in responses:
         if pat.search(response.text):
@@ -159,7 +159,7 @@ def edit(request, key='', pattern='', replacement='', re_flags='',
 # Undos of various stripes 
 @require_addressing
 @require_chanop
-def delete(request, key='', pattern='', re_flags='', **kwargs):
+def delete(request, key='', pattern='.', re_flags='', **kwargs):
     def delete_response(response, **kwargs):
         response.disabled = datetime.now()
         response.disabled_by = request.nick
@@ -169,7 +169,7 @@ def delete(request, key='', pattern='', re_flags='', **kwargs):
     not_deleted = (Q(disabled__exact=None),)
     deleted = regex_operation_on_factoid(key, pattern, re_flags,
             not_deleted, delete_response, multiple=True,
-            sort_field='-created')
+            sort_fields=('-created',))
     if not deleted:
         return render_error(
                 request, 'No response in %s contained your pattern' % key)
@@ -177,7 +177,7 @@ def delete(request, key='', pattern='', re_flags='', **kwargs):
 
 @require_addressing
 @require_chanop
-def undelete(request, key='', pattern='', re_flags='', **kwargs):
+def undelete(request, key='', pattern='.', re_flags='', **kwargs):
     def undelete_response(response, **kwargs):
         response.disabled = None
         response.disabled_by = None
@@ -186,7 +186,7 @@ def undelete(request, key='', pattern='', re_flags='', **kwargs):
 
     deleted = (Q(disabled__isnull=False),)
     undeleted = regex_operation_on_factoid(key, pattern, re_flags,
-            deleted, undelete_response, sort_field='-disabled')
+            deleted, undelete_response, sort_fields=('-disabled',))
     if not undeleted:
         return render_error(request,
                 'No deleted response found for %s' % key)
@@ -194,7 +194,7 @@ def undelete(request, key='', pattern='', re_flags='', **kwargs):
 
 @require_addressing
 @require_chanop
-def unedit(request, key='', pattern='', re_flags='', **kwargs):
+def unedit(request, key='', pattern='.', re_flags='', **kwargs):
     def unedit_response(response, factoid=None, **kwargs):
         try:
             oldresponse = factoid.factoidresponse_set.get(
@@ -207,9 +207,9 @@ def unedit(request, key='', pattern='', re_flags='', **kwargs):
 
     edited = (Q(disabled__exact=None),)
     unedited = regex_operation_on_factoid(key, pattern, re_flags,
-            edited, unedit_response, sort_field='-created')
+            edited, unedit_response, sort_fields=('-created',))
     if not unedited:
         return render_error(request,
-                'No deleted response in %s contained your pattern' % key)
+                'No edited response in %s contained your pattern' % key)
     return render_quick_reply(request, "ack.irc")
 
