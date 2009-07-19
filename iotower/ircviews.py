@@ -10,27 +10,18 @@ from django.db.models import Q
 from yardbird.irc import IRCResponse
 from yardbird.shortcuts import render_to_response, render_to_reply
 from yardbird.shortcuts import render_silence, render_error, render_quick_reply
+from yardbird.utils.decorators import require_addressing, require_chanop
 
-def require_addressing(function):
-    def new(request, *args, **kwargs):
-        if 'addressee' in kwargs:
-            if kwargs['addressee'] == request.my_nick:
-                request.addressed = True
-        if request.addressed:
-            return function(request, *args, **kwargs)
-        return render_error(request,
-                'You must address me to perform this operation.')
-    return new
-
-def require_chanop(function):
-    def new(request, *args, **kwargs):
-        chan = settings.IRC_PRIVILEGED_CHANNEL
-        if request.mask in request.chanmodes[chan]:
-            if '@' in request.chanmodes[chan][request.mask]:
-                return function(request, *args, **kwargs)
-        return render_error(request,
-                'You lack the necessary privileges to use this command.')
-    return new
+def generate_statistics():
+    oldest_response = FactoidResponse.objects.get(pk=1)
+    earliest_date = oldest_response.created.replace(microsecond=0)
+    num_factoids = len(Factoid.objects.all())
+    num_edits = len(FactoidResponse.objects.all())
+    num_active_responses = len(FactoidResponse.objects.filter(
+        disabled__exact=None))
+    return ('Since %s I have performed %d edits on %d factoids ' +
+            'containing %d active responses',
+            (earliest_date, num_edits, num_factoids, num_active_responses))
 
 @require_addressing
 @require_chanop
@@ -212,4 +203,3 @@ def unedit(request, key='', pattern='.', re_flags='', **kwargs):
         return render_error(request,
                 'No edited response in %s contained your pattern' % key)
     return render_quick_reply(request, "ack.irc")
-

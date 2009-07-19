@@ -1,0 +1,1 @@
+{% autoescape off %}{% if addressee %}{{addressee}}: {% endif %}{{ statistics|join:", " }}{% endautoescape %}
