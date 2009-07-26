@@ -12,6 +12,7 @@ setup(
     author_email="nick@zork.net",
     license="GPL",
     url="http://zork.net/~nick/yardbird/",
-    packages=['yardbird', 'yardbird.management',
-              'yardbird.management.commands'],
+    packages=['yardbird', 'yardbird.utils', 'yardbird.contrib',
+        'yardbird.management', 'yardbird.management.commands'],
+    package_data={'yardbird': ['templates/*.irc']},
 )
