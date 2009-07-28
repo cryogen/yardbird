@@ -8,7 +8,7 @@ A Django-based Chat Bot System
 
 ::
 
-	     __//  (An Oscar for Treadwell)
+	     __//  (Another Hairdo)
 	cf  /.__.\ /
 	    \ \/ /
 	 '__/    \
@@ -29,17 +29,12 @@ Django models and templates in your bot.
 How to Get It
 =============
 
-The latest source tarballs can be downloaded from
-http://zork.net/pub/yardbird/ and binary packages are kept in the ``debs/``
-subdirectory. 
-
-For the brave, there is an unsigned apt repository containing the yardbird
-binary debs.  To use it, add the following to your ``sources.list``::
-
-	deb http://zork.net/yardbird/archive hardy main
-
-This will give you access to the ``python-django-yardbird`` and
-``python-yardbird-iotower`` packages.
+	* The latest source tarballs can be downloaded from
+	  https://launchpad.net/yardbird/+download 
+	* Packages for Ubuntu (the repository works with Hardy or later) are
+	  available from https://launchpad.net/~spacehobo/+archive/ppa
+	  where you can install the ``python-django-yardbird`` and
+	  ``python-yardbird-iotower`` packages.
 
 How to Develop It
 -----------------
@@ -48,19 +43,20 @@ Development of both the Yardbird chatbot system and the IOTower example app
 is done from a single bazaar_ tree.  To get access to the development tree,
 simply run::
 
-	bzr branch http://zork.net/~nick/yardbird/
+	bzr branch lp:yardbird
 
-...and that will get all the sources.  In future source tarballs will be
-provided, and the location of this bazaar branch may move.
+...and you will have a complete source tree with the ``yardbird`` and
+``iotower`` packages as well as an example Django IRC Bot setup.
 
 .. _bazaar: http://bazaar-vcs.org/
 
 How to Install
 ==============
 
-Either use the provided ``setup.py`` to install the ``yardbird/`` package
-into your ``PYTHONPATH``, or copy/link the yardbird/ tree directly into
-your project as an application, like so::
+If you are using the PPA or other provided packages, you're all set!
+Otherwise, you can either use the provided ``setup.py`` to install the
+``yardbird/`` package into your ``PYTHONPATH``, or copy/link the yardbird/
+tree directly into your project as an application, like so::
 
 	example/
 	|-- __init__.py
