@@ -30,4 +30,4 @@ def render_silence(*args, **kwargs):
     return IRCResponse('', '', 'QUIET')
 
 def render_error(request, msg):
-    return IRCResponse(request.reply_recipient, msg, method='NOTICE')
+    return IRCResponse(request.nick, msg, method='NOTICE')
