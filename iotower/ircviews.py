@@ -48,18 +48,18 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
 
 def trigger(request, key='', verb='', **kwargs):
     # Only be noisy about unknown factoids if addressed.
-    if request.addressed:
+    try:
         factoid = get_object_or_404(Factoid, fact__iexact=key)
-    else:
-        try:
-            factoid = Factoid.objects.get(fact__iexact=key)
-        except:
+    except http.Http404:
+        if request.addressed:
+            return render_quick_reply(request, "nofactoid.irc")
+        else:
             return render_silence()
     try:
         text = factoid.factoidresponse_set.filter(
             verb__contains=verb,disabled__exact=None).order_by("?")[0]
     except IndexError:
-        #FIXME: this is just for testing
+        # If it can't find the verb you asked for, it'll try anything.
         text = factoid.factoidresponse_set.order_by("?")[0]
     if not text.tag:
         template = 'factoid.irc'
