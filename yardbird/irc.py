@@ -20,7 +20,7 @@ class IRCRequest(object):
         if self.channel == self.my_nick:
             self.addressed = True
             self.reply_recipient = self.nick
-        elif self.my_nick.lower() in self.message.lower():
+        elif self.message.lower().startswith(self.my_nick.lower()):
             self.addressed = True
             self.reply_recipient = self.channel
             self.addressee = self.nick
