@@ -1,5 +1,5 @@
 from django.conf import settings
-from yardbird.shortcuts import render_error
+from yardbird.shortcuts import render_error, render_silence
 
 def require_addressing(function):
     """Decorates a function to return an error if the request neither is
@@ -8,6 +8,8 @@ def require_addressing(function):
         if 'addressee' in kwargs:
             if kwargs['addressee'] == request.my_nick:
                 request.addressed = True
+            else:
+                return render_silence()
         if request.addressed:
             return function(request, *args, **kwargs)
         return render_error(request,
