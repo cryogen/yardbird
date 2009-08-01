@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import os, sys
 # Dirty hack while we are still in the source tree
-sys.path.append(os.path.dirname(os.getcwd()))
+sys.path.insert(0, os.path.dirname(os.getcwd()))
 
 from django.core.management import execute_manager
 try:
