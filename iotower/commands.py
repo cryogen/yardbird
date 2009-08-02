@@ -30,6 +30,8 @@ urlpatterns = patterns('iotower.ircviews',
   (?P<value>\S+.*) \W*$""", 'learn'), # foo's such a bar
 
  # Direct commands
+ (r"""(?iux)^lock \s+ (?P<key>.+?) \W*$""", 'lock'), # lock foo
+ (r"""(?iux)^unlock \s+ (?P<key>.+?) \W*$""", 'unlock'), # unlock foo
  (r"""(?iux)^literal \s+ (?P<key>.+?) \W*$""", 'literal'), # literal foo
  (r"""(?iux)^undelete \s+ (?P<key>.+?) \W*$""", 'undelete'), # undelete foo
  (r"""(?iux)^unedit \s+ (?P<key>.+?) \W*$""", 'unedit'), # unedit foo

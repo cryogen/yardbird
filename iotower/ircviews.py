@@ -29,6 +29,22 @@ def reimport(request, *args, **kwargs):
     return IRCResponse(request.reply_recipient, 'Reload successful.',
                        method='RESET')
 
+@require_addressing
+@require_chanop
+def lock(request, key='', **kwargs):
+    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid.protected = True
+    factoid.save()
+    return render_quick_reply(request, "ack.irc")
+
+@require_addressing
+@require_chanop
+def unlock(request, key='', **kwargs):
+    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid.protected = False
+    factoid.save()
+    return render_quick_reply(request, "ack.irc")
+
 #@require_addressing
 def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(fact=key.lower())
@@ -82,6 +98,8 @@ def literal(request, key='', **kwargs):
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
     text = key
     verb = ''
+    if factoid.protected:
+        text += ' [LOCKED] '
     for response in responses.order_by('verb', 'created'):
         if response.verb != verb:
             verb = response.verb
