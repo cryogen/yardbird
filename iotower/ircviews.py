@@ -48,7 +48,7 @@ def unlock(request, key='', **kwargs):
 #@require_addressing
 def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(fact=key.lower())
-    if not created and factoid.protected:
+    if factoid.protected:
         raise Exception, 'That factoid is protected!'
     elif also or created:
         if tag:
