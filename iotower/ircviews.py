@@ -77,8 +77,8 @@ def trigger(request, key='', verb='', **kwargs):
     except IndexError:
         # If it can't find the verb you asked for, it'll try anything.
         try:
-        text = factoid.factoidresponse_set.filter(
-                    disabled__exact=None).order_by("?")[0]
+            text = factoid.factoidresponse_set.filter(
+                disabled__exact=None).order_by("?")[0]
         except IndexError:
         # Empty factoid.
             return render_silence()
