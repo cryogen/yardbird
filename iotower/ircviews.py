@@ -80,7 +80,7 @@ def trigger(request, key='', verb='', **kwargs):
             text = factoid.factoidresponse_set.filter(
                 disabled__exact=None).order_by("?")[0]
         except IndexError:
-        # Empty factoid.
+            # Empty factoid.
             return render_silence()
     if not text.tag:
         template = 'factoid.irc'
