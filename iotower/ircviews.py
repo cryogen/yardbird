@@ -81,7 +81,10 @@ def trigger(request, key='', verb='', **kwargs):
                 disabled__exact=None).order_by("?")[0]
         except IndexError:
             # Empty factoid.
-            return render_silence()
+            if request.addressed:
+                return render_quick_reply(request, "nofactoid.irc")
+            else:
+                return render_silence()
     if not text.tag:
         template = 'factoid.irc'
     else:
