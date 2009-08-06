@@ -32,7 +32,7 @@ def reimport(request, *args, **kwargs):
 @require_addressing
 @require_chanop
 def lock(request, key='', **kwargs):
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid, created = Factoid.objects.get_or_create(fact=key.lower())
     factoid.protected = True
     factoid.save()
     return render_quick_reply(request, "ack.irc")
