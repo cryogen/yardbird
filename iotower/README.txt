@@ -12,7 +12,7 @@ An Infobot Replacement Inspired by Bucket
 	( ( ( O ) ) )
 	 \ `  |  ' /
 	      |
-	    |===|
+	    /===\
 	    |\ /|
 	    | X |
 	    |/ \|
