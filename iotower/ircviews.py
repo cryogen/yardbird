@@ -12,8 +12,11 @@ from yardbird.shortcuts import render_to_response, render_to_reply
 from yardbird.shortcuts import render_silence, render_error, render_quick_reply
 from yardbird.utils.decorators import require_addressing, require_chanop
 
-def normalize_factoid_key():
-    return re.sub(r'\s+', ' ', key.lower())
+def normalize_factoid_key(key):
+    key = key.lower()
+    key = re.sub(r'(?u)\s+', ' ', key)
+    key = re.sub(r'(?u)\W+', '', key)
+    return key
 
 def generate_statistics():
     oldest_response = FactoidResponse.objects.get(pk=1)
