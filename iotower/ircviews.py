@@ -14,8 +14,8 @@ from yardbird.utils.decorators import require_addressing, require_chanop
 
 def normalize_factoid_key(key):
     key = key.lower()
+    key = re.sub(r'(?u)[^\w\s]+', '', key)
     key = re.sub(r'(?u)\s+', ' ', key)
-    key = re.sub(r'(?u)\W+', '', key)
     return key
 
 def generate_statistics():
@@ -46,7 +46,7 @@ def lock(request, key='', **kwargs):
 @require_addressing
 @require_chanop
 def unlock(request, key='', **kwargs):
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     factoid.protected = False
     factoid.save()
     return render_quick_reply(request, "ack.irc")
@@ -108,7 +108,7 @@ def trigger(request, key='', verb='', **kwargs):
 @require_addressing
 @require_chanop
 def literal(request, key='', **kwargs):
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
     text = key
     verb = ''
@@ -134,7 +134,7 @@ def get_factoid_and_pattern(key, pattern, re_flags):
     if 'g' in re_flags:
         count = 0
     pat = re.compile(pattern, flags)
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     return factoid, pat, count
 
 def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
