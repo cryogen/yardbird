@@ -13,10 +13,10 @@ urlpatterns = patterns('iotower.ircviews',
  \s*$""", 'delete'), # foo =~ gi/foo/d <-- delete
 
  # Triggering factoids: 
- (r"""(?iux)^what's \s+ (?P<key>.*?) \s*$""", 'trigger'), # What's foo?
-(r"""(?iux)^what \s+ (?:do|does|did) \s+ (?P<key>.*?) \s+ (?P<verb>\w+?) \s*$""",
+ (r"""(?iux)^what's \s+ (?P<key>.*?) [?!.\s]*$""", 'trigger'), # What's foo?
+(r"""(?iux)^what \s+ (?:do|does|did) \s+ (?P<key>.*?) \s+ (?P<verb>\w+?) [?!.\s]*$""",
   'trigger'), # What does foo eat?
- (r"""(?iux)^what \s+ (?P<verb>\w+) \s+ (?P<key>.*?) \s*$""",
+ (r"""(?iux)^what \s+ (?P<verb>\w+) \s+ (?P<key>.*?) [?!.\s]*$""",
      'trigger'), # What thinks foo?
 
  # Learning factoids:
@@ -32,13 +32,13 @@ urlpatterns = patterns('iotower.ircviews',
  # Direct commands
  (r"""(?iux)^lock \s+ (?P<key>.+?) \s*$""", 'lock'), # lock foo
  (r"""(?iux)^unlock \s+ (?P<key>.+?) \s*$""", 'unlock'), # unlock foo
- (r"""(?iux)^literal \s+ (?P<key>.+?) \s*$""", 'literal'), # literal foo
+ (r"""(?iux)^literal \s+ (?P<key>.+?) [?!.\s]*$""", 'literal'), # literal foo
  (r"""(?iux)^undelete \s+ (?P<key>.+?) \s*$""", 'undelete'), # undelete foo
  (r"""(?iux)^unedit \s+ (?P<key>.+?) \s*$""", 'unedit'), # unedit foo
  (r"""(?iux)^reload""", 'reimport'), # re-import all yardbird apps
 
  # By default, the bot tries to trigger factoids, and fails silently
- (r"""(?iux)^(?P<key>.+?) \s*$""", 'trigger'),
+ (r"""(?iux)^(?P<key>.+?) [?!.\s]*$""", 'trigger'),
  (r"""(?iux)^(?P<key>.*)""", 'trigger')
 )
 
