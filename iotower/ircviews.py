@@ -12,6 +12,12 @@ from yardbird.shortcuts import render_to_response, render_to_reply
 from yardbird.shortcuts import render_silence, render_error, render_quick_reply
 from yardbird.utils.decorators import require_addressing, require_chanop
 
+def normalize_factoid_key(key):
+    key = key.lower()
+    key = re.sub(r'(?u)[^\w\s]+', '', key)
+    key = re.sub(r'(?u)\s+', ' ', key)
+    return key
+
 def generate_statistics():
     oldest_response = FactoidResponse.objects.get(pk=1)
     earliest_date = oldest_response.created.replace(microsecond=0)
@@ -32,7 +38,7 @@ def reimport(request, *args, **kwargs):
 @require_addressing
 @require_chanop
 def lock(request, key='', **kwargs):
-    factoid, created = Factoid.objects.get_or_create(fact=key.lower())
+    factoid, created = Factoid.objects.get_or_create(fact=normalize_factoid_key(key))
     factoid.protected = True
     factoid.save()
     return render_quick_reply(request, "ack.irc")
@@ -40,14 +46,14 @@ def lock(request, key='', **kwargs):
 @require_addressing
 @require_chanop
 def unlock(request, key='', **kwargs):
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     factoid.protected = False
     factoid.save()
     return render_quick_reply(request, "ack.irc")
 
 #@require_addressing
 def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
-    factoid, created = Factoid.objects.get_or_create(fact=key.lower())
+    factoid, created = Factoid.objects.get_or_create(fact=normalize_factoid_key(key))
     if factoid.protected:
         raise Exception, 'That factoid is protected!'
     elif also or created:
@@ -65,7 +71,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
 def trigger(request, key='', verb='', **kwargs):
     # Only be noisy about unknown factoids if addressed.
     try:
-        factoid = get_object_or_404(Factoid, fact__iexact=key)
+        factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     except http.Http404:
         if request.addressed:
             return render_quick_reply(request, "nofactoid.irc")
@@ -102,7 +108,7 @@ def trigger(request, key='', verb='', **kwargs):
 @require_addressing
 @require_chanop
 def literal(request, key='', **kwargs):
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
     text = key
     verb = ''
@@ -128,7 +134,7 @@ def get_factoid_and_pattern(key, pattern, re_flags):
     if 'g' in re_flags:
         count = 0
     pat = re.compile(pattern, flags)
-    factoid = get_object_or_404(Factoid, fact__iexact=key)
+    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     return factoid, pat, count
 
 def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
