@@ -6,31 +6,39 @@ from twisted.words.protocols.irc import IRCClient
 from twisted.internet import defer, threads, task
 from twisted import version as twisted_version
 from django import get_version as django_version
-from django.core import urlresolvers
+from django.core import urlresolvers, exceptions
 from django.conf import settings
+from django.http import Http404
 
 from irc import IRCRequest, IRCResponse
 from signals import request_started, request_finished
+from shortcuts import render_quick_reply
 from version import VERSION
 
 log = logging.getLogger('yardbird')
 log.setLevel(logging.DEBUG)
 
-def terrible_error(failure, bot, request, *args, **kwargs):
-    """FIXME: This errback function is likely more terrible than the
-    errors it handles. It sends a NOTICE with any traceback message, and
-    tries to be cute about erroring out on a complete lack of
-    urlresolver matches. This is handy for debugging, but likely
-    irritating for production bots."""
-    def reply(bot, request, message, *args, **kwargs):
-        recipient = request.reply_recipient
-        res = IRCResponse(recipient, message % kwargs, method='NOTICE')
-        return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
+def report_error(failure, bot, request, *args, **kwargs):
+    """Specific errors are reacted to only if the bot is specifically
+    addressed.  These correspond roughly to the 4XX errors in HTTP."""
+    r = failure.trap(Http404, exceptions.PermissionDenied)
+    log.debug(failure)
+    if not request.addressed:
+        return
+    elif r == Http404:
+        res = render_quick_reply(request, "notfound.irc")
+    elif r == exceptions.PermissionDenied:
+        res = render_quick_reply(request, "permdenied.irc")
+    return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
+
+
+def unrecoverable_error(failure, bot, request, *args, **kwargs):
+    """Unrecoverable errors are logged and NOTICEd, unconditionally.
+    These correspond roughly to the 5XX errors in HTTP."""
     log.warn(failure)
     e = str(failure.getErrorMessage())
-    if 'path' in e and 'tried' in e:
-        return reply(bot, request, 'Dude?')
-    return reply(bot, request, u'Dude! %s' % e)
+    res = IRCResponse(request.reply_recipient, e, method='NOTICE')
+    return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
 
 class DjangoBot(IRCClient):
     """DjangoBot subclasses the Twisted Python IRCClient class in order
@@ -141,7 +149,9 @@ class DjangoBot(IRCClient):
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self, user, channel, msg, method)
             log.info(unicode(req))
-            self.dispatch(req).addErrback(terrible_error, self, req)
+            self.dispatch(req
+                    ).addErrback(report_error, self, req
+                    ).addErrback(unrecoverable_error, self, req)
         else:
             self.hostmask = user.split('!', 1)[1]
     def noticed(self, *args, **kwargs):

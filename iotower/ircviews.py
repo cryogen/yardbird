@@ -2,11 +2,12 @@ import re
 from datetime import datetime
 
 from models import *
-from django import http
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.template import Template, Context
 from django.db.models import Q
+from django.core import exceptions
 from yardbird.irc import IRCResponse
 from yardbird.shortcuts import render_to_response, render_to_reply
 from yardbird.shortcuts import render_silence, render_error, render_quick_reply
@@ -53,9 +54,11 @@ def unlock(request, key='', **kwargs):
 
 #@require_addressing
 def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
-    factoid, created = Factoid.objects.get_or_create(fact=normalize_factoid_key(key))
+    """Add a factoid record to the database."""
+    factoid, created = Factoid.objects.get_or_create(
+            fact=normalize_factoid_key(key))
     if factoid.protected:
-        raise Exception, 'That factoid is protected!'
+        raise exceptions.PermissionDenied, 'That factoid is protected!'
     elif also or created:
         if tag:
             tag = tag.strip().strip('<>')
@@ -65,18 +68,14 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         if request.addressed:
             return render_quick_reply(request, "ack.irc")
     if request.addressed:
-        return render_quick_reply(request, "sorry.irc")
+        triggerkey='%s %s %s' % (key, verb, value)
+        return trigger(request, key=triggerkey)
     return render_silence()
 
 def trigger(request, key='', verb='', **kwargs):
-    # Only be noisy about unknown factoids if addressed.
-    try:
-        factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
-    except http.Http404:
-        if request.addressed:
-            return render_quick_reply(request, "nofactoid.irc")
-        else:
-            return render_silence()
+    """Retrieve a factoid record from the database."""
+    factoid = get_object_or_404(Factoid,
+            fact__iexact=normalize_factoid_key(key))
     try:
         text = factoid.factoidresponse_set.filter(
             verb__contains=verb,disabled__exact=None).order_by("?")[0]
@@ -86,11 +85,7 @@ def trigger(request, key='', verb='', **kwargs):
             text = factoid.factoidresponse_set.filter(
                 disabled__exact=None).order_by("?")[0]
         except IndexError:
-            # Empty factoid.
-            if request.addressed:
-                return render_quick_reply(request, "nofactoid.irc")
-            else:
-                return render_silence()
+            raise Http404
     if not text.tag:
         template = 'factoid.irc'
     else:

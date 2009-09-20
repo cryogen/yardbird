@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from yardbird.shortcuts import render_error, render_silence
 
 def require_addressing(function):
@@ -24,6 +25,5 @@ def require_chanop(function):
         if request.mask in request.chanmodes[chan]:
             if '@' in request.chanmodes[chan][request.mask]:
                 return function(request, *args, **kwargs)
-        return render_error(request,
-                'You lack the necessary privileges to use this command.')
+        raise PermissionDenied
     return new

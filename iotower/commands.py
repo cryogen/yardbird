@@ -19,16 +19,6 @@ urlpatterns = patterns('iotower.ircviews',
  (r"""(?iux)^what \s+ (?P<verb>\w+) \s+ (?P<key>.*?) [?!.\s]*$""",
      'trigger'), # What thinks foo?
 
- # Learning factoids:
- (r"""(?iux)^(?P<key>.*) \s+ (?P<verb>is|are) \s+ (?P<also>also\s+)?
-  (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
-  'learn'), # foo is also <reply> bar! or foo is baz
- (r"""(?iux)^(?P<key>.*?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+
-  (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
-  'learn'), # foo also =eats= baz
- (r"""(?iux)^(?P<key>.*)'s \s+ (?P<also>also\s+)? (?P<tag><[^>]+>\s*)?
-  (?P<value>\S+.*) \s*$""", 'learn'), # foo's such a bar
-
  # Direct commands
  (r"""(?iux)^lock \s+ (?P<key>.+?) \s*$""", 'lock'), # lock foo
  (r"""(?iux)^unlock \s+ (?P<key>.+?) \s*$""", 'unlock'), # unlock foo
@@ -36,6 +26,16 @@ urlpatterns = patterns('iotower.ircviews',
  (r"""(?iux)^undelete \s+ (?P<key>.+?) \s*$""", 'undelete'), # undelete foo
  (r"""(?iux)^unedit \s+ (?P<key>.+?) \s*$""", 'unedit'), # unedit foo
  (r"""(?iux)^reload""", 'reimport'), # re-import all yardbird apps
+
+ # Learning factoids:
+ (r"""(?iux)^(?P<key>.*?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+
+  (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
+  'learn'), # foo also =eats= baz
+ (r"""(?iux)^(?P<key>.*) \s+ (?P<verb>is|are) \s+ (?P<also>also\s+)?
+  (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
+  'learn'), # foo is also <reply> bar! or foo is baz
+ (r"""(?iux)^(?P<key>.*)'s \s+ (?P<also>also\s+)? (?P<tag><[^>]+>\s*)?
+  (?P<value>\S+.*) \s*$""", 'learn'), # foo's such a bar
 
  # By default, the bot tries to trigger factoids, and fails silently
  (r"""(?iux)^(?P<key>.+?) [?!.\s]*$""", 'trigger'),
