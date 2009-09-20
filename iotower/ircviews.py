@@ -67,15 +67,14 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         factext.save()
         if request.addressed:
             return render_quick_reply(request, "ack.irc")
-    if request.addressed:
-        triggerkey='%s %s %s' % (key, verb, value)
-        try:
-            return trigger(request, key=triggerkey)
-        except Http404:
-            # FIXME: This should be an edit conflict exception
-            raise(exceptions.PermissionDenied,
-                    'That factoid already exists!')
-    return render_silence()
+    # If we got this far, it's worth trying to see if this is just a
+    # factoid with 'is' or 'are' in the key.
+    triggerkey='%s %s %s' % (key, verb, value)
+    try:
+        return trigger(request, key=triggerkey)
+    except Http404:
+        # FIXME: This should be an edit conflict exception
+        raise(exceptions.PermissionDenied, 'That factoid already exists!')
 
 def trigger(request, key='', verb='', **kwargs):
     """Retrieve a factoid record from the database."""
