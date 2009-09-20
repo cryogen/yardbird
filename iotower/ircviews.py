@@ -69,7 +69,12 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
             return render_quick_reply(request, "ack.irc")
     if request.addressed:
         triggerkey='%s %s %s' % (key, verb, value)
-        return trigger(request, key=triggerkey)
+        try:
+            return trigger(request, key=triggerkey)
+        except Http404:
+            # FIXME: This should be an edit conflict exception
+            raise(exceptions.PermissionDenied,
+                    'That factoid already exists!')
     return render_silence()
 
 def trigger(request, key='', verb='', **kwargs):
