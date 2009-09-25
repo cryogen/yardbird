@@ -236,4 +236,9 @@ class DjangoBot(IRCClient):
         for channel in self.chanmodes:
             if mask in self.chanmodes[channel]:
                 del(self.chanmodes[channel][mask])
+    
+    ############### Custom IRC methods ###############
+    def me(self, channel, action):
+        """Hacking around broken CTCP ACTION stuff with PRIVMSG"""
+        return self.msg(channel, '\001ACTION %s\001' % action)
 
