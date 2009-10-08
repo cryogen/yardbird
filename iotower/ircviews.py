@@ -17,6 +17,9 @@ def normalize_factoid_key(key):
     key = key.lower()
     key = re.sub(r'(?u)[^\w\s]+', '', key)
     key = re.sub(r'(?u)\s+', ' ', key)
+    if 1 > len(key) > 64:
+        raise(exceptions.ValidationError,
+                "Normalized key '%s' not fit for database" % key)
     return key
 
 def generate_statistics():
