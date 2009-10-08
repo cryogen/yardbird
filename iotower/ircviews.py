@@ -155,7 +155,7 @@ def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
 
 def replace_response(old_response, new_text, created_by):
     edited = FactoidResponse(fact=old_response.fact,
-            verb=old_response.verb, text=new_text,
+            verb=old_response.verb, tag=old_response.tag, text=new_text,
             created_by=created_by)
     edited.save() # To generate creation time.
     old_response.disabled = edited.created
