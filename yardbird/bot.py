@@ -9,6 +9,7 @@ from django import get_version as django_version
 from django.core import urlresolvers, exceptions
 from django.conf import settings
 from django.http import Http404
+from django.db import close_connection
 
 from irc import IRCRequest, IRCResponse
 from signals import request_started, request_finished
@@ -23,6 +24,7 @@ def report_error(failure, bot, request, *args, **kwargs):
     addressed.  These correspond roughly to the 4XX errors in HTTP."""
     r = failure.trap(Http404, exceptions.PermissionDenied)
     log.debug(failure)
+    close_connection() # prevent open transactions from wedging the bot
     if not request.addressed:
         return
     elif r == Http404:
