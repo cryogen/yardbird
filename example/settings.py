@@ -69,11 +69,13 @@ IRC_PRIVILEGED_CHANNEL = '#yardbird'
 IRC_CONNECTIONS = (
         {
             'server':('irc.slashnet.org', 6697, True),
+            'password':'',
             'nick':'yardbird',
             'channels':( '#yardbird', '#birdland', '#dumont' ),
         },
 #        {
 #            'server':('irc.oftc.net', 6667, False),
+#            'password':'',
 #            'nick':'metrefowl',
 #            'channels':( '#metrefowl', ),
 #        },

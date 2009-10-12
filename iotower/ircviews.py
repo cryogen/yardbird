@@ -17,10 +17,10 @@ def normalize_factoid_key(key):
     key = key.lower()
     key = re.sub(r'(?u)[^\w\s]+', '', key)
     key = re.sub(r'(?u)\s+', ' ', key)
-    if 1 > len(key) > 64:
-        raise(exceptions.ValidationError,
+    if 1 <= len(key) <= 64:
+        return key
+    raise(exceptions.ValidationError,
                 "Normalized key '%s' not fit for database" % key)
-    return key
 
 def generate_statistics():
     oldest_response = FactoidResponse.objects.get(pk=1)
@@ -61,7 +61,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     factoid, created = Factoid.objects.get_or_create(
             fact=normalize_factoid_key(key))
     if factoid.protected:
-        raise exceptions.PermissionDenied, 'That factoid is protected!'
+        raise(exceptions.PermissionDenied, 'That factoid is protected!')
     elif also or created:
         if tag:
             tag = tag.strip().strip('<>')
@@ -72,10 +72,9 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
             return render_quick_reply(request, "ack.irc")
     # If we got this far, it's worth trying to see if this is just a
     # factoid with 'is' or 'are' in the key.
-    triggerkey='%s %s %s' % (key, verb, value)
     try:
-        return trigger(request, key=triggerkey)
-    except Http404:
+        return trigger(request, key=request.message)
+    except Http404, exceptions.ValidationError:
         # FIXME: This should be an edit conflict exception
         raise(exceptions.PermissionDenied, 'That factoid already exists!')
 

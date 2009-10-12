@@ -28,7 +28,9 @@ class Command(BaseCommand):
         for connection in settings.IRC_CONNECTIONS:
             f = protocol.ReconnectingClientFactory()
             f.protocol = DjangoBot
-            f.nickname, f.channels = connection['nick'], connection['channels']
+            f.nickname = connection['nick']
+            f.channels = connection['channels']
+            f.protocol.password = connection['password']
             hostname, port, is_ssl = connection['server']
             if is_ssl:
                 reactor.connectSSL(hostname, port, f, ssl.ClientContextFactory())
