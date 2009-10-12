@@ -71,7 +71,6 @@ IRC_LOCATIONS = (
             'server':('irc.slashnet.org', 6697, True),
             'nick':'yardbird',
             'channels':( '#yardbird', '#birdland', '#dumont' ),
-            'channels':( '#yardbird', ),
         },
 #        {
 #            'server':('irc.oftc.net', 6667, False),
