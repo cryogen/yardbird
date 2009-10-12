@@ -28,6 +28,7 @@ class Command(BaseCommand):
         f = protocol.ReconnectingClientFactory()
         f.protocol = DjangoBot
         f.nickname, f.channels = settings.IRC_NICK, settings.IRC_CHANNELS
+        f.protocol.password = settings.IRC_PASSWORD
         for server in settings.IRC_SERVERS:
             hostname, port = server
             reactor.connectSSL(hostname, port, f, ssl.ClientContextFactory())
