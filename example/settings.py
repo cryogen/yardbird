@@ -66,7 +66,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'example.urls'
 ROOT_MSGCONF = 'example'
 IRC_PRIVILEGED_CHANNEL = '#yardbird'
-IRC_LOCATIONS = (
+IRC_CONNECTIONS = (
         {
             'server':('irc.slashnet.org', 6697, True),
             'nick':'yardbird',

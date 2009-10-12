@@ -25,11 +25,11 @@ class Command(BaseCommand):
         # then we pass my FACTORY and ANOTHER FACTORY into a REACTOR to run
         # things.  Is Java responsible for this idiocy, or Heroin?
 
-        for place in settings.IRC_LOCATIONS:
+        for connection in settings.IRC_CONNECTIONS:
             f = protocol.ReconnectingClientFactory()
             f.protocol = DjangoBot
-            f.nickname, f.channels = place['nick'], place['channels']
-            hostname, port, is_ssl = place['server']
+            f.nickname, f.channels = connection['nick'], connection['channels']
+            hostname, port, is_ssl = connection['server']
             if is_ssl:
                 reactor.connectSSL(hostname, port, f, ssl.ClientContextFactory())
             else:
