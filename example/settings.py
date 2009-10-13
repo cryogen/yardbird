@@ -65,13 +65,16 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'example.urls'
 ROOT_MSGCONF = 'example'
-IRC_PRIVILEGED_CHANNEL = '#yardbird'
+IRC_NICK = 'yardbird'
+IRC_CHANNELS = ( '#yardbird', '#birdland', '#dumont' )
 IRC_CHANNELS = (
         "ircs://yardbird@irc.slashnet.org:6697/privileged/#yardbird",
         "ircs://yardbird@irc.slashnet.org:6697/#birdland",
         "ircs://irc.slashnet.org:6697/#dumont",
 #        "irc://metrefowl@irc.oftc.net/#metrefowl",
-)
+    )
+IRC_PRIVILEGED_CHANNEL = '#yardbird'
+IRC_SERVERS = ( ("irc.slashnet.org", 6697), )
 
 
 TEMPLATE_DIRS = (

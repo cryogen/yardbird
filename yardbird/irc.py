@@ -4,7 +4,7 @@ from django.utils.encoding import force_unicode
 
 class IRCRequest(object):
     def __init__(self, connection, user, channel, msg, method='privmsg',
-                 **kwargs):
+            privileged_channels=[], **kwargs):
         self.my_nick = connection.nickname
         self.chanmodes = connection.chanmodes
         self.user = user
@@ -13,6 +13,7 @@ class IRCRequest(object):
         else:
             self.nick, self.mask = user, None
         self.channel = channel
+        self.privileged_channels = privileged_channels
         self.message = force_unicode(msg)
         self.method = method.upper()
         self.context = kwargs

@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 port = 6667
             else:
                 port = p.port
-            key = "%s:%s" % (p.hostname, port)
+            key = (p.hostname, port)
 
             if key not in connections:
                 connections[key] = {
@@ -70,16 +70,16 @@ class Command(BaseCommand):
         # then we pass my FACTORY and ANOTHER FACTORY into a REACTOR to run
         # things.  Is Java responsible for this idiocy, or Heroin?
 
-        for key in connections:
-            if connections[key]['nick'] == '':
+        for key, connection in connections.iteritems():
+            if connection['nick'] == '':
                 raise Exception, "No nick set for %s" % key
-            else:
-                connection = connections[key]
             f = protocol.ReconnectingClientFactory()
             f.protocol = DjangoBot
+            f.protocol.password = connection['password']
+
             f.nickname = connection['nick']
             f.channels = connection['channels']
-            f.protocol.password = connection['password']
+            f.privchans = connection['privileged_channels']
             hostname = connection['hostname']
             port = connection['port']
             scheme = connection['scheme']

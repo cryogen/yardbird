@@ -19,9 +19,10 @@ def require_chanop(function):
     """Decorates a function to return an error if the requestor lacks
     operator status in the channel blessed in the settings."""
     def new(request, *args, **kwargs):
-        chan = settings.IRC_PRIVILEGED_CHANNEL
-        if request.mask in request.chanmodes[chan]:
-            if '@' in request.chanmodes[chan][request.mask]:
-                return function(request, *args, **kwargs)
+        for chan in request.privileged_channels:
+            chan = chan.lower()
+            if request.mask in request.chanmodes[chan]:
+                if '@' in request.chanmodes[chan][request.mask]:
+                    return function(request, *args, **kwargs)
         raise PermissionDenied
     return new
