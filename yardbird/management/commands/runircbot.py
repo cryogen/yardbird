@@ -55,7 +55,7 @@ class Command(BaseCommand):
                     if value == None:
                         continue
                     if connections[key][irc] != '' and connections[key][irc] != value:
-                        print("WARNING - Overwriting value '%s'='%s' with '%s'" % (irc, connections[key][irc], value))
+                        log.warn("Overwriting value '%s'='%s' with '%s'" % (irc, connections[key][irc], value))
                     connections[key][irc] = value
                 except AttributeError:
                     pass
@@ -72,7 +72,7 @@ class Command(BaseCommand):
 
         for key, connection in connections.iteritems():
             if connection['nick'] == '':
-                raise Exception, "No nick set for %s" % key
+                raise ValueError, "No nick set for %s:%d" % key
             f = protocol.ReconnectingClientFactory()
             f.protocol = DjangoBot
             f.protocol.password = connection['password']
