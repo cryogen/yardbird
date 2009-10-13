@@ -58,6 +58,7 @@ class DjangoBot(IRCClient):
                         'TOPIC':    self.topic,
                         'RESET':    self.reimport,
                        }
+        self.privchans = []
         self.chanmodes = {}
         self.whoreplies = {}
         self.hostmask = '' # until we see ourselves speak, we do not know
@@ -150,7 +151,8 @@ class DjangoBot(IRCClient):
         IRCRequest representation and pass that on to the dispatch()
         method."""
         if user.split('!', 1)[0] != self.nickname:
-            req = IRCRequest(self, user, channel, msg, method)
+            req = IRCRequest(self, user, channel, msg, method,
+                    privileged_channels=self.privchans)
             log.info(unicode(req))
             self.dispatch(req
                     ).addErrback(report_error, self, req
@@ -211,7 +213,8 @@ class DjangoBot(IRCClient):
         temporary data structure."""
         me, chan, uname, host, server, nick, modes, name = args
         mask = '%s@%s' % (uname, host)
-        self.whoreplies[chan.lower()][mask] = modes
+        if chan.lower() in self.whoreplies:
+            self.whoreplies[chan.lower()][mask] = modes
     def irc_RPL_ENDOFWHO(self, prefix, args):
         """All WHO data are received, and the newly-populated data
         structure replaces a portion of the existing per-channel user
