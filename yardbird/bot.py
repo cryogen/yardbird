@@ -58,7 +58,6 @@ class DjangoBot(IRCClient):
                         'TOPIC':    self.topic,
                         'RESET':    self.reimport,
                        }
-        self.privchans = []
         self.chanmodes = {}
         self.whoreplies = {}
         self.hostmask = '' # until we see ourselves speak, we do not know
@@ -152,7 +151,7 @@ class DjangoBot(IRCClient):
         method."""
         if user.split('!', 1)[0] != self.nickname:
             req = IRCRequest(self, user, channel, msg, method,
-                    privileged_channels=self.privchans)
+                    privileged_channels=self.factory.privchans)
             log.info(unicode(req))
             self.dispatch(req
                     ).addErrback(report_error, self, req

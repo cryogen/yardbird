@@ -75,10 +75,11 @@ class Command(BaseCommand):
                 raise Exception, "No nick set for %s" % key
             f = protocol.ReconnectingClientFactory()
             f.protocol = DjangoBot
+            f.protocol.password = connection['password']
+
             f.nickname = connection['nick']
             f.channels = connection['channels']
-            f.protocol.password = connection['password']
-            f.protocol.privchans = connection['privileged_channels']
+            f.privchans = connection['privileged_channels']
             hostname = connection['hostname']
             port = connection['port']
             scheme = connection['scheme']
