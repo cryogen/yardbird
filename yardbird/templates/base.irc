@@ -1,1 +1,1 @@
-{% load shorten %}{% autoescape off %}{% if addressee %}{{addressee}}: {% endif %}{% block message %}{{text}}{% endblock %}{% endautoescape %}
+{% autoescape off %}{% if addressee %}{{addressee}}: {% endif %}{% block message %}{{text}}{% endblock %}{% endautoescape %}
