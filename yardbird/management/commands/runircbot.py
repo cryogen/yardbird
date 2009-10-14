@@ -11,7 +11,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         import logging
         from django.conf import settings
-        from twisted.internet import ssl
         from twisted.internet import reactor, protocol
         from yardbird.bot import DjangoBot, log
 
@@ -21,50 +20,7 @@ class Command(BaseCommand):
         formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
         termlog.setFormatter(formatter)
         log.addHandler(termlog)
-
-        # Parse the connection URIs into a dict
-        # First we need to beat urlparse into submission
-        for scheme in ("irc", "ircs"):
-            urlparse.uses_netloc.append(scheme)
-            urlparse.uses_query.append(scheme)
-            urlparse.uses_params.append(scheme)
-
-        connections = {}
-        for uri in settings.IRC_CHANNELS:
-            p = urlparse.urlparse(uri, 'irc')
-            if p.port == None:
-                port = 6667
-            else:
-                port = p.port
-            key = (p.hostname, port)
-
-            if key not in connections:
-                connections[key] = {
-                        'scheme':'',
-                        'nick':'',
-                        'password':'',
-                        'hostname':p.hostname,
-                        'port':port,
-                        'channels':[],
-                        'privileged_channels':[],
-                }
-
-            for (urielem, irc) in (('username', 'nick'), ('password', 'password'), ('scheme', 'scheme')):
-                try:
-                    value = p.__getattribute__(urielem)
-                    if value == None:
-                        continue
-                    if connections[key][irc] != '' and connections[key][irc] != value:
-                        print("WARNING - Overwriting value '%s'='%s' with '%s'" % (irc, connections[key][irc], value))
-                    connections[key][irc] = value
-                except AttributeError:
-                    pass
-
-            path = p.path.split("/")[1:]
-            if len(path) == 2 and path[0] == "privileged":
-                connections[key]['privileged_channels'].append(path[1])
-                path.pop(0)
-            connections[key]['channels'].append(path.pop())
+        connections = parse_irc_urls(settings.IRC_CHANNELS)
 
         # SRSLY?  I set up a FACTORY and my bot class is its PROTOCOL and
         # then we pass my FACTORY and ANOTHER FACTORY into a REACTOR to run
@@ -84,8 +40,62 @@ class Command(BaseCommand):
             port = connection['port']
             scheme = connection['scheme']
             if scheme == "ircs":
-                reactor.connectSSL(hostname, port, f, ssl.ClientContextFactory())
+                reactor.connectSSL(hostname, port, f,
+                        connection['context_factory'])
             else:
                 reactor.connectTCP(hostname, port, f)
         reactor.run()
+
+
+# First we need to beat urlparse into submission
+for scheme in ("irc", "ircs"):
+    urlparse.uses_netloc.append(scheme)
+    urlparse.uses_query.append(scheme)
+    urlparse.uses_params.append(scheme)
+
+def parse_irc_urls(urls):
+    """ Parse connection URIs into a dict of attributes """
+    from twisted.internet import ssl
+    connections = {}
+    for uri in urls:
+        p = urlparse.urlparse(uri, 'irc')
+        if p.port == None:
+            port = 6667
+        else:
+            port = p.port
+        key = (p.hostname, port)
+
+        if key not in connections:
+            connections[key] = {
+                    'scheme':'',
+                    'nick':'',
+                    'password':'',
+                    'hostname':p.hostname,
+                    'port':port,
+                    'channels':[],
+                    'privileged_channels':[],
+                    'context_factory': ssl.ClientContextFactory(),
+            }
+
+        for (urielem, irc) in (('username', 'nick'), ('password', 'password'), ('scheme', 'scheme')):
+            value = getattr(p, urielem, None)
+            if not value:
+                continue
+            if connections[key][irc] and connections[key][irc] != value:
+                log.warn("Overwriting value '%s'='%s' with '%s'", irc,
+                        connections[key][irc], value)
+            connections[key][irc] = value
+
+        path = p.path.split("/")[1:]
+        if len(path) == 2 and path[0] == "privileged":
+            connections[key]['privileged_channels'].append(path[1])
+            path.pop(0)
+        connections[key]['channels'].append(path.pop())
+
+        qdict = urlparse.parse_qs(p.query)
+        if 'cert' in qdict and 'key' in qdict:
+            ctxf = ssl.DefaultOpenSSLContextFactory(qdict['key'],
+                    qdict['cert'])
+            connections[key]['context_factory'] = ctxf
+    return connections
 
