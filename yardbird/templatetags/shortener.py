@@ -1,5 +1,8 @@
 from django.template.defaultfilters import stringfilter
+from django import template
 from yardbird.contrib import shortener
+
+register = template.Library()
 
 @register.filter
 @stringfilter
