@@ -89,7 +89,11 @@ def parse_irc_urls(urls):
             path.pop(0)
         connections[key]['channels'].append(path.pop())
 
-        qdict = urlparse.parse_qs(p.query)
+        qdict = {}
+        if p.query:
+            # python2.5 lacks parse_qs*.  This is total placeholder.
+            # For one thing it doesn't support multi-value elements.
+            qdict = dict(s.split('=') for s in p.query.split('&'))
         if 'cert' in qdict and 'key' in qdict:
             ctxf = ssl.DefaultOpenSSLContextFactory(qdict['key'],
                     qdict['cert'])
