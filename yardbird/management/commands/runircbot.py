@@ -59,7 +59,10 @@ def parse_irc_urls(urls):
     connections = {}
     for uri in urls:
         p = urlparse.urlparse(uri, 'irc')
-        port = getattr(p, 'port', 6667)
+        if p.port:
+            port = p.port
+        else:
+            port = 6667
         key = (p.hostname, port)
 
         if key not in connections:
