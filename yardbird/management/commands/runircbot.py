@@ -31,19 +31,21 @@ class Command(BaseCommand):
                 raise Exception, "No nick set for %s" % key
             f = protocol.ReconnectingClientFactory()
             f.protocol = DjangoBot
-            f.protocol.password = connection['password']
 
+            f.password = connection['password']
             f.nickname = connection['nick']
             f.channels = connection['channels']
             f.privchans = connection['privileged_channels']
-            hostname = connection['hostname']
-            port = connection['port']
-            scheme = connection['scheme']
-            if scheme == "ircs":
-                reactor.connectSSL(hostname, port, f,
+
+            f.hostname = connection['hostname']
+            f.port = connection['port']
+            f.scheme = connection['scheme']
+
+            if f.scheme == "ircs":
+                reactor.connectSSL(f.hostname, f.port, f,
                         connection['context_factory'])
             else:
-                reactor.connectTCP(hostname, port, f)
+                reactor.connectTCP(f.hostname, f.port, f)
         reactor.run()
 
 

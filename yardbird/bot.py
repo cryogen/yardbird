@@ -73,6 +73,7 @@ class DjangoBot(IRCClient):
         self.sourceURL = 'http://zork.net/~nick/yardbird/ '
         self.realname = 'Charlie Parker Jr.'
         self.fingerReply = str(settings.INSTALLED_APPS)
+        self.l = task.LoopingCall(self.PING)
 
 
     ############### Connection management methods ###############
@@ -82,18 +83,22 @@ class DjangoBot(IRCClient):
         off a periodic PING request to regularly test the connection."""
         self.servername = servername
         log.info("Connected to %s" % self.servername)
-        self.l = task.LoopingCall(self.PING)
         self.l.start(60.0) # call every minute
     def connectionMade(self):
         """This function assumes that the factory was added to this
         object by the calling script.  It may be more desirable to
         implement this as an argument to the __init__"""
         self.nickname = self.factory.nickname
+        self.password = self.factory.password
         IRCClient.connectionMade(self)
     def connectionLost(self, reason):
+        log.warn("Disconnected from %s (%s:%s): %s" % (self.servername,
+            self.factory.hostname, self.factory.port, reason))
         IRCClient.connectionLost(self, reason)
-        self.l.stop() # All done now.
-        log.warn("Disconnected from %s" % self.servername)
+        try:
+            self.l.stop() # All done now.
+        except AssertionError:
+            pass # We never managed to connect in the first place!
     def signedOn(self):
         """Since we can't know what our hostmask will be in advance, the
         DjangoBot sends itself a trivial PRIVMSG after sign-on.  The
