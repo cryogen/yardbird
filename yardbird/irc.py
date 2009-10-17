@@ -12,8 +12,9 @@ class IRCRequest(object):
             self.nick, self.mask = user.split('!', 1)
         else:
             self.nick, self.mask = user, None
-        self.channel = channel
-        self.privileged_channels = privileged_channels
+        self.channel = force_unicode(channel)
+        self.privileged_channels = [force_unicode(x) for x in
+                privileged_channels]
         self.message = force_unicode(msg)
         self.method = method.upper()
         self.context = kwargs
@@ -35,7 +36,7 @@ class IRCRequest(object):
 class IRCResponse(object):
     def __init__(self, recipient, data, method='PRIVMSG',
                  **kwargs):
-        self.recipient = recipient
+        self.recipient = force_unicode(recipient)
         self.data = force_unicode(data)
         self.method = method
         self.context = kwargs

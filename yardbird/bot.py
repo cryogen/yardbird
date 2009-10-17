@@ -142,13 +142,13 @@ class DjangoBot(IRCClient):
         elif response.method == 'PRIVMSG':
             opts = {'length':
                     510 - len(':! PRIVMSG  :' + self.nickname +
-                              response.recipient + self.hostmask)}
+                      response.recipient.encode('utf-8') + self.hostmask)}
         else:
             opts = {}
         log.info(unicode(response))
         defer.returnValue(
-            self.methods[response.method](response.recipient,
-                                          response.data.encode('UTF-8'),
+            self.methods[response.method](response.recipient.encode('utf-8'),
+                                          response.data.encode('utf-8'),
                                           **opts))
     def dispatchable_event(self, user, channel, msg, method):
         """All events that can be handled by Django code construct an
