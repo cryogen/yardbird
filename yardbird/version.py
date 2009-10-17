@@ -1,5 +1,5 @@
 VERSION = 'Another Hairdo'
-TARGET = '0.1'
+TARGET = '0.9'
 
 def sdist_ver():
     import re
