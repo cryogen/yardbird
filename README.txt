@@ -84,15 +84,42 @@ you can simply::
 
 	./manage.py runircbot
 
-and it will connect via SSL according to the following variables from
-``settings.py``:
+and it will connect according to the ``IRC_CHANNELS`` variable from
+``settings.py``.  ``IRC_CHANNELS`` is a sequence of ``irc://`` or
+``ircs://`` urls, like the following::
 
-	:IRC_NICK:	The bot's desired nickname.  The server may set the
-			bot to an alternate nick if the desired one is in
-			use.
-	:IRC_CHANNELS:	A list of channels to join on connection.
-	:IRC_SERVERS:	A tuple of 2-tuples containing server hostname and
-			connecting SSL port.
+	IRC_CHANNELS = (
+	 'ircs://nerdbird:password@irc.slashnet.org:6697/privileged/#yardbird',
+	 'ircs://irc.slashnet.org:6697/#birdland',
+	 u'ircs://irc.slashnet.org:6697/#\u2615', # unicode teacup
+	 'ircs://examplebot@irc.oftc.net:6697/#yardbird?cert=/home/example/keys/yardbird.cert&key=/home/example/keys/yardbird.key',
+	 )
+
+The above will connect to Slashnet_ via SSL, with nickname ``nerdbird``
+and server password ``password``.  Since Slashnet_ passes the server
+password through to NickServ, this avoids the need for a special
+NickServ application.  The first line also joins ``#yardbird`` and notes
+that it is *privileged*, meaning that the operators in that channel may
+use restricted commands.
+
+The next two channels (``#birdland`` and ``#☕``) are part of the same
+connection, so they use the same settings that #yardbird did.
+
+The last entry is an SSL connection to OFTC_ with the nickname
+``examplebot``.  OFTC `uses SSL user certificates`_ to authenticate to
+NickServ, so the query string specifies where the certificate and key
+files are to be found.
+
+In addition to ``IRC_CHANNELS``, you must set ``ROOT_MSGCONF`` to the
+module that contains ``privmsg`` and any other IRC events that you want
+your bot to handle.  Typically it mimics ``ROOT_URLCONF`` like so::
+
+	ROOT_URLCONF = 'example.urls'
+	ROOT_MSGCONF = 'example'
+
+.. _Slashnet: http://www.slashnet.org/
+.. _OFTC: http://www.oftc.net/
+.. _uses SSL user certificates: http://www.oftc.net/oftc/NickServ/CertFP
 
 How to Code for Yardbird
 ========================
