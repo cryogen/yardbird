@@ -4,8 +4,8 @@ from yardbird.utils.decorators import require_addressing
 
 @require_addressing
 def gather_statistics(request, addressee='', template_name='stats.irc',
-        dictionary={}, context_instance=None):
-    dictionary['statistics'] = []
+        context_instance=None):
+    dictionary = {'statistics': []}
     for app in settings.INSTALLED_APPS:
         try:
             m = __import__(app + '.ircviews')
