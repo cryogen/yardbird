@@ -125,6 +125,7 @@ class DjangoBot(IRCClient):
             """This function runs in a separate thread, as the signal
             handlers and callback functions may take forever and a day
             to execute."""
+            close_connection() # Get a new DB session
             request_started.send(sender=self, request=request)
             response = callback(req, *args, **kwargs)
             request_finished.send(sender=self, request=request,
