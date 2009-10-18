@@ -23,12 +23,12 @@ def normalize_factoid_key(key):
                 "Normalized key '%s' not fit for database" % key)
 
 def generate_statistics():
-    oldest_response = FactoidResponse.objects.get(pk=1)
+    fr = FactoidResponse.objects
+    oldest_response = fr.get(pk=1)
     earliest_date = oldest_response.created.replace(microsecond=0)
-    num_factoids = len(Factoid.objects.all())
-    num_edits = len(FactoidResponse.objects.all())
-    num_active_responses = len(FactoidResponse.objects.filter(
-        disabled__exact=None))
+    num_factoids = Factoid.objects.count()
+    num_edits = fr.count()
+    num_active_responses = fr.filter(disabled__exact=None).count()
     return ('Since %s I have performed %d edits on %d factoids ' +
             'containing %d active responses',
             (earliest_date, num_edits, num_factoids, num_active_responses))

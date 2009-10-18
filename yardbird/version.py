@@ -1,4 +1,4 @@
-VERSION = 'Another Hairdo'
+VERSION = 'Anthropology'
 TARGET = '0.9'
 
 def sdist_ver():
