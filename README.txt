@@ -8,7 +8,7 @@ A Django-based Chat Bot System
 
 ::
 
-	    ,__,       (Another Hairdo!)
+	    ,__,       (Anthropology!)
 	  ,'    `.     /
 	 /`-,   @ `__
 	|    `-, ,'\
