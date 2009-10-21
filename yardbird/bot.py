@@ -31,7 +31,8 @@ def report_error(failure, bot, request, *args, **kwargs):
         res = render_quick_reply(request, "notfound.irc")
     elif r == exceptions.PermissionDenied:
         res = render_quick_reply(request, "permdenied.irc")
-    return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
+    return bot.methods[res.method](res.recipient.encode('utf-8'),
+            res.data.encode('utf-8'))
 
 
 def unrecoverable_error(failure, bot, request, *args, **kwargs):
@@ -41,7 +42,8 @@ def unrecoverable_error(failure, bot, request, *args, **kwargs):
     log.warn(failure)
     e = str(failure.getErrorMessage())
     res = IRCResponse(request.reply_recipient, e, method='NOTICE')
-    return bot.methods[res.method](res.recipient, res.data.encode('utf-8'))
+    return bot.methods[res.method](res.recipient.encode('utf-8'),
+            res.data.encode('utf-8'))
 
 class DjangoBot(IRCClient):
     """DjangoBot subclasses the Twisted Python IRCClient class in order
