@@ -68,6 +68,7 @@ def sighting(sender, **kwargs):
     if 'request' in kwargs:
         req = kwargs['request']
         if auspicious_re.search(req.message):
-            sender.notice(req.reply_recipient, '242 sighting!')
+            sender.notice(req.reply_recipient.encode('utf-8'),
+                    '242 sighting!')
 
 request_started.connect(sighting)
