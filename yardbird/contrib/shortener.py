@@ -5,7 +5,7 @@ from math import log, floor
 
 # Completely bikeshedded base64 character set, aimed at maximal
 # typability.
-charset = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-.'
+charset = '.abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-'
 
 def encode64(number):
     if number == 0:
