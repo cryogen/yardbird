@@ -3,18 +3,22 @@
 from django.template.loader import render_to_string
 from irc import IRCResponse
 
-def render_to_response(recipient, template_name, dictionary={},
+def render_to_response(recipient, template_name, dictionary=None,
                        context_instance=None, method='PRIVMSG'):
+    if not dictionary:
+        dictionary = {}
     text = render_to_string(template_name, dictionary, context_instance)
     dictionary['method'] = method
     return IRCResponse(recipient, text.strip(), **dictionary)
 
-def render_to_reply(request, template_name, dictionary={},
+def render_to_reply(request, template_name, dictionary=None,
                     context_instance=None):
     """render_to_reply crafts a response based on attributes of the
     request.  It also tries to fill in the "addressee" for reply
     addressing logic if the incoming dictionary does not already specify
     one."""
+    if not dictionary:
+        dictionary = {}
     if 'addressee' not in  dictionary:
         dictionary['addressee'] = request.addressee
     return render_to_response(request.reply_recipient, template_name,

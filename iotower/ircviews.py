@@ -139,7 +139,7 @@ def get_factoid_and_pattern(key, pattern, re_flags):
     return factoid, pat, count
 
 def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
-        multiple=False, sort_fields=[]):
+        multiple=False, sort_fields=None):
     factoid, pat, count = get_factoid_and_pattern(key, pattern, re_flags)
     responses = factoid.factoidresponse_set.filter(*queries)
     if sort_fields:
