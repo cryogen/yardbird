@@ -20,7 +20,7 @@ def require_chanop(function):
     operator status in the channel blessed in the settings."""
     def new(request, *args, **kwargs):
         for chan in request.privileged_channels:
-            chan = chan.lower()
+            chan = chan.lower().encode('utf-8')
             if request.mask in request.chanmodes[chan]:
                 if '@' in request.chanmodes[chan][request.mask]:
                     return function(request, *args, **kwargs)
