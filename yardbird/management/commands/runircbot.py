@@ -86,7 +86,7 @@ def parse_irc_urls(urls):
             if connections[key][irc] and connections[key][irc] != value:
                 log.warn("Overwriting value '%s'='%s' with '%s'", irc,
                         connections[key][irc], value)
-            connections[key][irc] = value
+            connections[key][irc] = value.encode('utf-8')
 
         path = p.path.split("/")[1:]
         if len(path) == 2 and path[0] == "privileged":
