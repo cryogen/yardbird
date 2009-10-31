@@ -90,7 +90,8 @@ def parse_irc_urls(urls):
 
         path = p.path.split("/")[1:]
         if len(path) == 2 and path[0] == "privileged":
-            connections[key]['privileged_channels'].append(path[1])
+            connections[key]['privileged_channels'].append(
+                    path[1].encode('utf-8'))
             path.pop(0)
         connections[key]['channels'].append(path.pop().encode('utf-8'))
 
