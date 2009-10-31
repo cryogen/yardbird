@@ -112,7 +112,6 @@ class DjangoBot(IRCClient):
     def joined(self, channel):
         log.info("[I have joined %s]" % channel)
         self.who(channel)
-        self.msg(channel, 'what up, meatbags') # Debugging message.
     def PING(self):
         log.debug('PING %s' % self.servername)
         self.sendLine('PING %s' % self.servername)
