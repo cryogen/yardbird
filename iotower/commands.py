@@ -21,8 +21,6 @@ urlpatterns = patterns('iotower.ircviews',
  (r"""(?iux)^what's \s+ (?P<key>.+?) [?!.\s]*$""", 'trigger'), # What's foo?
 (r"""(?iux)^what \s+ (?:do|does|did) \s+ (?P<key>.+?) \s+ (?P<verb>\w+?) [?!.\s]*$""",
   'trigger'), # What does foo eat?
- (r"""(?iux)^what \s+ (?P<verb>\w+) \s+ (?P<key>.+?) [?!.\s]*$""",
-     'trigger'), # What thinks foo?
 
  # Direct commands
  (r"""(?iux)^lock \s+ (?P<key>.+?) \s*$""", 'lock'), # lock foo
