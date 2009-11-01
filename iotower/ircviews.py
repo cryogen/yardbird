@@ -73,7 +73,8 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     # If we got this far, it's worth trying to see if this is just a
     # factoid with 'is' or 'are' in the key.
     try:
-        return trigger(request, key=request.message)
+        return trigger(request,
+                key=request.message.split(':')[-1].strip())
     except Http404, exceptions.ValidationError:
         # FIXME: This should be an edit conflict exception
         raise(exceptions.PermissionDenied, 'That factoid already exists!')
