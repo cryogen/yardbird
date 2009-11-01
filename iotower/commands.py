@@ -12,6 +12,11 @@ urlpatterns = patterns('iotower.ircviews',
  (?P<re_flags>[ig]*) (?P<sep>[^\w\s]) (?P<pattern>.*) (?P=sep) d
  \s*$""", 'delete'), # foo =~ gi/foo/d <-- delete
 
+ # The =verb= syntax is explicit enough that it trumps nearly everything.
+ (r"""(?iux)^(?P<key>.+?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+
+  (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
+  'learn'), # foo also =eats= baz
+
  # Triggering factoids: 
  (r"""(?iux)^what's \s+ (?P<key>.+?) [?!.\s]*$""", 'trigger'), # What's foo?
 (r"""(?iux)^what \s+ (?:do|does|did) \s+ (?P<key>.+?) \s+ (?P<verb>\w+?) [?!.\s]*$""",
@@ -28,9 +33,6 @@ urlpatterns = patterns('iotower.ircviews',
  (r"""(?iux)^reload""", 'reimport'), # re-import all yardbird apps
 
  # Learning factoids:
- (r"""(?iux)^(?P<key>.+?) \s+ (?P<also>also\s+)? =(?P<verb>\w+)= \s+
-  (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
-  'learn'), # foo also =eats= baz
  (r"""(?iux)^(?P<key>.+?) \s+ (?P<verb>is|are) \s+ (?P<also>also\s+)?
   (?P<tag><[^>]+>\s*)? (?P<value>\S+.*) \s*$""",
   'learn'), # foo is also <reply> bar! or foo is baz
