@@ -18,8 +18,10 @@ urlpatterns = patterns('iotower.ircviews',
   'learn'), # foo also =eats= baz
 
  # Triggering factoids: 
- (r"""(?iux)^what's \s+ (?P<key>.+?) [?!.\s]*$""", 'trigger'), # What's foo?
-(r"""(?iux)^what \s+ (?:do|does|did) \s+ (?P<key>.+?) \s+ (?P<verb>\w+?) [?!.\s]*$""",
+ (r"""(?iux)^what'(s|re) \s+ (?P<key>.+?) [?!.\s]*$""", 'trigger'), # What's foo?
+ (r"""(?iux)^what \s+ .*? (?P<verb>is|are) \s+ (?P<key>.+?) [?!.\s]*$""",
+     'trigger'), # What in tarnation are foos?
+ (r"""(?iux)^what \s+ .*? (?:do|does|did) \s+ (?P<key>.+?) \s+ (?P<verb>\w+?) [?!.\s]*$""",
   'trigger'), # What does foo eat?
 
  # Direct commands
