@@ -24,7 +24,7 @@ def normalize_factoid_key(key):
 
 def generate_statistics():
     fr = FactoidResponse.objects
-    oldest_response = fr.get(pk=1)
+    oldest_response = fr.all()[0]
     earliest_date = oldest_response.created.replace(microsecond=0)
     num_factoids = Factoid.objects.count()
     num_edits = fr.count()
