@@ -198,7 +198,9 @@ class DjangoBot(IRCClient):
         for modname, module in sys.modules.iteritems():
             # We reload yardbird library code as well as all known
             # django apps.
-            for app in ['yardbird.'] + settings.INSTALLED_APPS:
+            for app in ['yardbird.'] + [ a for a in
+                    settings.INSTALLED_APPS if not
+                    a.startswith('django.')]:
                 if module and modname.startswith(app):
                     reload(module)
                     break # On to next module
