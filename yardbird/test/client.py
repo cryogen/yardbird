@@ -36,17 +36,19 @@ class TestResponse(IRCResponse):
         self.method = response.method
         self.context = response.context
         self.opts = opts
+        self._charset = 'utf-8' # It's the Network Byte Order of
+                                # charsets.  Deal with it.
 
 class Client(object):
     """
     A class that can act as a client for testing purposes.
     """
-    def __init__(self, nick='TestUser', hostmask='test@localhost',
-            chanmodes=None, **defaults):
+    def __init__(self, user='TestUser!testuser@localhost',
+            bot='TestBot!testbot@localhost', chanmodes=(), **defaults):
         self.defaults = defaults
-        self.nickname = nick
-        self.hostmask = hostmask
-        self.mask = '!'.join(self.nickname, self.hostmask)
+        self.mask = user
+        self.my_nickname, self.my_hostmask = user.split('!', 1)
+        self.nickname, self.hostmask = bot.split('!', 1)
         self.chanmodes = dict(chanmodes)
         if 'ROOT_MSGCONF' in self.defaults:
             self.ROOT_MSGCONF = self.defaults['ROOT_MSGCONF']
@@ -70,14 +72,14 @@ class Client(object):
     def _dispatch(self, request):
         resolver = urlresolvers.get_resolver('.'.join(
             (self.ROOT_MSGCONF, request.method.lower())))
-        callback, args, kwargs = resolver.resolve('/' + req.message)
+        callback, args, kwargs = resolver.resolve('/' + request.message)
         #request_started.send(sender=self, request=request)
         response = callback(request, *args, **kwargs)
         #request_finished.send(sender=self, request=request, response=response)
         return response
 
     def _send_event(self, user, recipient, message, method):
-        request = IRCRequest(self, user, recipient, msg, method,
+        request = IRCRequest(self, user, recipient, message, method,
                 privileged_channels=self.chanmodes)
         response = self._dispatch(request)
         opts = {}
@@ -87,14 +89,14 @@ class Client(object):
         return TestResponse(response, request, self, opts)
 
     def msg(self, recipient, message):
-        return self._send_event(self.nickname, recipient, message,
+        return self._send_event(self.mask, recipient, message,
                 'privmsg')
     def me(self, recipient, message):
-        return self._send_event(self.nickname, recipient, message,
+        return self._send_event(self.mask, recipient, message,
                 'action')
     def topic(self, channel, topic):
-        return self._send_event(self.nickname, channel, topic,
+        return self._send_event(self.mask, channel, topic,
                 'topic')
     def nick(self, channel, new_nick):
-        return self._send_event(self.nickname, channel, new_nick,
+        return self._send_event(self.mask, channel, new_nick,
                 'nick')
