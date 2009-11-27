@@ -51,6 +51,7 @@ class Client(object):
         self.my_nickname, self.my_hostmask = user.split('!', 1)
         self.nickname, self.hostmask = bot.split('!', 1)
         self.chanmodes = dict(chanmodes)
+        self.privileged_channels = []
         if 'ROOT_MSGCONF' in self.defaults:
             self.ROOT_MSGCONF = self.defaults['ROOT_MSGCONF']
         else:
@@ -59,9 +60,9 @@ class Client(object):
     def join(self, channel):
         if channel.lower() not in self.chanmodes:
             self.chanmodes[channel.lower()] = {}
-        self.chanmodes[channel.lower()][self.hostmask] = 'H'
+        self.chanmodes[channel.lower()][self.my_hostmask] = 'H'
     def part(self, channel):
-        del(self.chanmodes[channel.lower()][self.hostmask])
+        del(self.chanmodes[channel.lower()][self.my_hostmask])
 
     def op(self, hostmask, channel, mode='@'):
         channel = self.chanmodes[channel.lower()]
@@ -87,7 +88,7 @@ class Client(object):
         signals.template_rendered.connect(on_template_render)
 
         request = IRCRequest(self, user, recipient, message, method,
-                privileged_channels=self.chanmodes)
+                privileged_channels=self.privileged_channels)
         response = self._dispatch(request)
         opts = {}
         if response.method == 'PRIVMSG':
