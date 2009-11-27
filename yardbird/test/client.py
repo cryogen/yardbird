@@ -17,8 +17,10 @@ bot's status structures) """
 
 from yardbird.irc import IRCRequest, IRCResponse
 from django.conf import settings
-from django.test import signals
 from django.core import urlresolvers
+from django.test import signals
+from django.test.client import store_rendered_templates
+from django.utils.functional import curry
 
 class TestResponse(IRCResponse):
     """
@@ -34,7 +36,6 @@ class TestResponse(IRCResponse):
         self.content = response.data.encode('utf-8')
         self.data = self.content # historic for __unicode__()
         self.method = response.method
-        self.context = response.context
         self.opts = opts
         self._charset = 'utf-8' # It's the Network Byte Order of
                                 # charsets.  Deal with it.
@@ -56,6 +57,8 @@ class Client(object):
             self.ROOT_MSGCONF = settings.ROOT_MSGCONF
 
     def join(self, channel):
+        if channel.lower() not in self.chanmodes:
+            self.chanmodes[channel.lower()] = {}
         self.chanmodes[channel.lower()][self.hostmask] = 'H'
     def part(self, channel):
         del(self.chanmodes[channel.lower()][self.hostmask])
@@ -79,6 +82,10 @@ class Client(object):
         return response
 
     def _send_event(self, user, recipient, message, method):
+        data = {}
+        on_template_render = curry(store_rendered_templates, data)
+        signals.template_rendered.connect(on_template_render)
+
         request = IRCRequest(self, user, recipient, message, method,
                 privileged_channels=self.chanmodes)
         response = self._dispatch(request)
@@ -86,7 +93,20 @@ class Client(object):
         if response.method == 'PRIVMSG':
             opts['length'] = 510 - len(':! PRIVMSG  :' + self.nickname +
                     response.recipient.encode('utf-8') + self.hostmask)
-        return TestResponse(response, request, self, opts)
+
+        # Add any rendered template detail to the response.
+        # If there was only one template rendered (the most likely case),
+        # flatten the list to a single element.
+        response = TestResponse(response, request, self, opts)
+        for detail in ('template', 'context'):
+            if data.get(detail):
+                if len(data[detail]) == 1:
+                    setattr(response, detail, data[detail][0]);
+                else:
+                    setattr(response, detail, data[detail])
+            else:
+                setattr(response, detail, None)
+        return response
 
     def msg(self, recipient, message):
         return self._send_event(self.mask, recipient, message,

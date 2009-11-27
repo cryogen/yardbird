@@ -6,9 +6,10 @@ class FactoidTestCase(TransactionTestCase):
         self.client.join('#testing')
     def _call_and_response(self, assertion, query, substring):
         response = self.client.msg(self.client.nickname, assertion)
-        self.assertContains(response, self.client.my_nickname,
-                method='PRIVMSG')
+        self.assertTemplateUsed(response, 'ack.irc') # successful set
+
         response = self.client.msg(self.client.nickname, query)
+        self.assertTemplateUsed(response, 'factoid.irc') # trigger
         self.assertContains(response, substring, method='PRIVMSG')
 
     def test_set_factoid(self):
