@@ -4,5 +4,5 @@ Django.
 """
 
 from yardbird.test.client import Client
-from yardbird.test.testcases import TestCase, TransactionTestCase
+from yardbird.test.testcases import YardbirdTestCase as TestCase
 

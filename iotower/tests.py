@@ -1,8 +1,8 @@
 import unittest
-from yardbird.test import TransactionTestCase
+from yardbird.test import TestCase
 from django.core import exceptions
 
-class FactoidTestCase(TransactionTestCase):
+class FactoidTestCase(TestCase):
     def setUp(self):
         self.client.join('#testing')
         self.client.privileged_channels.append('#testing')
