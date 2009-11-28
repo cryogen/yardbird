@@ -66,7 +66,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         if tag:
             tag = tag.strip().strip('<>')
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
-                                  tag=tag, created_by=request.nick)
+                                  tag=tag.lower(), created_by=request.nick)
         factext.save()
         if request.addressed:
             return render_quick_reply(request, "ack.irc")
@@ -96,7 +96,7 @@ def trigger(request, key='', verb='', **kwargs):
     if not text.tag:
         template = 'factoid.irc'
     else:
-        template = 'factoid-%s.irc' % text.tag
+        template = 'factoid-%s.irc' % text.tag.lower()
     context = Context(request.__dict__)
     rendered = Template(text.text).render(context)
     d = {'factoid': key, 'verb': text.verb, 'text': rendered}
