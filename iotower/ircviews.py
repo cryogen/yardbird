@@ -66,7 +66,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
         if tag:
             tag = tag.strip().strip('<>')
         factext = FactoidResponse(fact=factoid, verb=verb, text=value,
-                                  tag=tag.lower(), created_by=request.nick)
+                                  tag=tag, created_by=request.nick)
         factext.save()
         if request.addressed:
             return render_quick_reply(request, "ack.irc")
