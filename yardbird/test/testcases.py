@@ -1,25 +1,17 @@
 import unittest
 
 from django.conf import settings
-from django.test.testcases import TestCase as DjangoTestCase
-
-from django.core.urlresolvers import clear_url_caches
 from django.utils.encoding import smart_str
+from django.test.testcases import TestCase as DjangoTestCase
 
 from yardbird.test.client import Client
 
 class YardbirdTestCase(DjangoTestCase):
-    def _urlconf_setup(self):
-        if hasattr(self, 'msgconf'):
-            self._old_root_msgconf = settings.ROOT_MSGCONF
-            settings.ROOT_MSGCONF = self.msgconf
-            clear_url_caches()
-    def _urlconf_teardown(self):
-        if hasattr(self, '_old_root_msgconf'):
-            settings.ROOT_MSGCONF = self._old_root_msgconf
-            clear_url_caches()
     def __call__(self, result=None):
-        self.client = Client()
+        if hasattr(self, 'msgconf'):
+            self.client = Client(ROOT_MSGCONF=self.msgconf)
+        else:
+            self.client = Client()
         try:
             self._pre_setup()
         except (KeyboardInterrupt, SystemExit):

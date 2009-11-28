@@ -74,6 +74,7 @@ class Client(object):
             channel[hostmask] = channel[hostmask].replace(mode, '')
 
     def _dispatch(self, request):
+        urlresolvers.clear_url_caches()
         resolver = urlresolvers.get_resolver('.'.join(
             (self.ROOT_MSGCONF, request.method.lower())))
         callback, args, kwargs = resolver.resolve('/' + request.message)

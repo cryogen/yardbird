@@ -3,6 +3,7 @@ from yardbird.test import TestCase
 from django.core import exceptions
 
 class FactoidTestCase(TestCase):
+    msgconf = 'example' # Test using the distributed privmsg.py et al
     def setUp(self):
         self.client.join('#testing')
         self.client.privileged_channels.append('#testing')
