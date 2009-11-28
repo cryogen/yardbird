@@ -70,7 +70,7 @@ class Client(object):
             channel[hostmask] += mode
     def deop(self, hostmask, channel, mode='@'):
         channel = self.chanmodes[channel.lower()]
-        if mode not in channel[hostmask]:
+        if mode in channel[hostmask]:
             channel[hostmask] = channel[hostmask].replace(mode, '')
 
     def _dispatch(self, request):
