@@ -24,6 +24,36 @@ class IoTowerTestCase(TestCase):
         self.assertRaises(Http404, self.client.msg,
                 self.client.nickname, message)
 
+class TwoFourTwoTestCase(IoTowerTestCase):
+    """This demonstrates how one can write tests to verify the result of
+    a signal handler, which can pull the bot's strings arbitrarily.
+    Since the client has a signal_sender, we can analyze the args (of
+    which the first is the name of the bot method called) and the
+    kwargs."""
+    def _trigger_242(self, text):
+        self.failUnless(not self.client.signal_sender)
+        self.assertRaises(Http404, self.client.msg,
+                self.client.nickname, text)
+        args, kwargs = self.client.signal_sender.get_event()
+        self.assertEqual(args,
+                ('notice', self.client.my_nickname, '242 sighting!'))
+        self.failUnless(not self.client.signal_sender)
+    def test_plain_242(self):
+        self._trigger_242('242')
+    def test_punctuated_242(self):
+        self._trigger_242('2:4-2')
+    def test_obfuscated_242(self):
+        self._trigger_242(
+            "I spent 2 dollars on 4 monkeys! That means 2 for a dollar!")
+    def test_factoided_242(self):
+        self.failUnless(not self.client.signal_sender)
+        self._call_and_response(
+            '2 is the loneliest number, but 4 times 2 is 8', 'what is 2')
+        args, kwargs = self.client.signal_sender.get_event()
+        self.assertEqual(args,
+                ('notice', self.client.my_nickname, '242 sighting!'))
+        self.failUnless(not self.client.signal_sender)
+
 class FactoidTestCase(IoTowerTestCase):
     """Test all the ways we can set and retrieve factoids."""
 

@@ -16,6 +16,7 @@ means oplist for that channel, plus explicit op/deop commands to diddle
 bot's status structures) """
 
 from yardbird.irc import IRCRequest, IRCResponse
+from yardbird.signals import request_started, request_finished
 from django.conf import settings
 from django.core import urlresolvers
 from django.test import signals
@@ -40,6 +41,22 @@ class TestResponse(IRCResponse):
         self._charset = 'utf-8' # It's the Network Byte Order of
                                 # charsets.  Deal with it.
 
+class MockSignalSender(list):
+    """This is meant to be used as the sender= parameter for django
+    signals. This way, the signal handlers that expect to get a bot
+    object can call sender.notice('message') and it will be queued up
+    for later analysis."""
+    def drain(self):
+        self[:] = []
+    def get_event(self):
+        return self.pop(0)
+    def __call__(self, *args, **kwargs):
+        self.append((args, kwargs))
+    def __getattr__(self, attr):
+        def f(*args, **kwargs):
+            return self(attr, *args, **kwargs)
+        return f
+
 class Client(object):
     """
     A class that can act as a client for testing purposes.
@@ -52,6 +69,7 @@ class Client(object):
         self.nickname, self.hostmask = bot.split('!', 1)
         self.chanmodes = dict(chanmodes)
         self.privileged_channels = []
+        self.signal_sender = MockSignalSender()
         if 'ROOT_MSGCONF' in self.defaults:
             self.ROOT_MSGCONF = self.defaults['ROOT_MSGCONF']
         else:
@@ -78,9 +96,10 @@ class Client(object):
         resolver = urlresolvers.get_resolver('.'.join(
             (self.ROOT_MSGCONF, request.method.lower())))
         callback, args, kwargs = resolver.resolve('/' + request.message)
-        #request_started.send(sender=self, request=request)
+        request_started.send(sender=self.signal_sender, request=request)
         response = callback(request, *args, **kwargs)
-        #request_finished.send(sender=self, request=request, response=response)
+        request_finished.send(sender=self.signal_sender,
+                request=request, response=response)
         return response
 
     def _send_event(self, user, recipient, message, method):
