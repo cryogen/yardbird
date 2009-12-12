@@ -108,6 +108,22 @@ class FactoidTestCase(IoTowerTestCase):
         response = self.client.msg(self.client.nickname, 'perl')
         self.assertNotContains(response, 'the', method='PRIVMSG')
 
+class FactoidOddities(IoTowerTestCase):
+    """Sometimes setting a factoid doesn't do what you expect."""
+    def test_trigger_with_is(self):
+        self._call_and_response("A is a letter.", "What is A?")
+        self._call_and_response("A is A =is= a tautology.", "A is A",
+                "A is A is a tautology.")
+    def test_existing_response(self):
+        self._call_and_response(
+                "C is for coffee, dat good enough for me!",
+                "What is C?")
+        response = self.client.msg(self.client.nickname,
+                "C is for coffee, dat good enough for me!")
+        self.assertTemplateUsed(response, 'already.irc')
+        response = self.client.msg(self.client.nickname,
+                "C is also for coffee, dat good enough for me!")
+        self.assertTemplateUsed(response, 'already.irc')
 
 class PrivilegedOperations(IoTowerTestCase):
     """Test all the commands that require elevated privilege"""

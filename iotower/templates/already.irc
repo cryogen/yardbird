@@ -1,0 +1,1 @@
+{% extends "base.irc" %}{% block message %}I already had it that way, {{nick}}.{% endblock %}

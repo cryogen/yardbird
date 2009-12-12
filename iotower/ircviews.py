@@ -65,11 +65,21 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     elif also or created:
         if tag:
             tag = tag.strip().strip('<>')
-        factext = FactoidResponse(fact=factoid, verb=verb, text=value,
-                                  tag=tag, created_by=request.nick)
-        factext.save()
+        factext, created = FactoidResponse.objects.get_or_create(
+                fact=factoid, verb=verb, text=value, tag=tag,
+                created_by=request.nick)
         if request.addressed:
-            return render_quick_reply(request, "ack.irc")
+            if created:
+                return render_quick_reply(request, "ack.irc")
+            return render_quick_reply(request, "already.irc")
+    else:
+        try:
+            factext = FactoidResponse.objects.get(fact=factoid,
+                    verb=verb, text=value, tag=tag)
+            return render_quick_reply(request, "already.irc")
+        except FactoidResponse.DoesNotExist:
+            pass
+
     # If we got this far, it's worth trying to see if this is just a
     # factoid with 'is' or 'are' in the key.
     try:
