@@ -4,7 +4,7 @@ from django.db import models
 
 try:
     from yardbird.signals import request_started, request_finished
-except:
+except: # pragma: no cover
     print """ ***** NOTA BENE *****
 The IOTower app is written for Yardbird, which is a chat bot system
 for Django.  It is not generally useful from the Web, and as such you

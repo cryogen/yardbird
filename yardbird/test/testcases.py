@@ -14,9 +14,9 @@ class YardbirdTestCase(DjangoTestCase):
             self.client = Client()
         try:
             self._pre_setup()
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit): # pragma: no cover
             raise
-        except Exception:
+        except Exception: # pragma: no cover
             import sys
             result.addError(self, sys.exc_info())
             return
@@ -25,9 +25,9 @@ class YardbirdTestCase(DjangoTestCase):
         unittest.TestCase.__call__(self, result)
         try:
             self._post_teardown()
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit): # pragma: no cover
             raise
-        except Exception:
+        except Exception: # pragma: no cover
             import sys
             result.addError(self, sys.exc_info())
             return
