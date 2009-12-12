@@ -24,9 +24,3 @@ def decode64(text):
         place_value = charset.index(text[len(text) - power - 1])
         number += place_value * 64**power
     return number
-
-if __name__ == '__main__':
-    for i in xrange(0,5000):
-        encd = encode64(i)
-        decd = decode64(encd)
-        print 'VAL:', i, encd, decd
