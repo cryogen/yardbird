@@ -1,0 +1,63 @@
+#!/usr/bin/python
+
+"""This is a hideous script designed to live in the root of the working
+tree as "precommit".  This allows a precommit hook like the one
+described in
+http://schettino72.wordpress.com/2008/01/20/how-to-execute-tests-on-a-bazaar-pre-commit-hook/
+to cancel a commit if the tests do not pass or test coverage is not
+100%."""
+
+import os
+import sys
+import coverage
+
+coverage.erase()
+coverage.start()
+
+sys.argv = ['./manage.py', 'test']
+from example import manage
+manage.execute_manager(manage.settings)
+
+coverage.stop()
+
+cov = coverage.the_coverage
+cov.save()
+
+total_statements = 0
+total_tested = 0
+test_results=0
+
+morfs = cov.filter_by_prefix(cov.cexecuted.keys(),
+        omit_prefixes=['/usr', '<doctest', 'coverage'])
+morfs.sort(cov.morf_name_compare)
+
+max_name = max([5,] + map(len, map(cov.morf_name, morfs)))
+fmt_name = "%%- %ds" % max_name
+fmt = fmt_name + "% 6d % 6d % 5d%%"
+header = str(fmt_name + "% 6s % 6s % 6s  %s") % ('Filename', 'Stmts', 'Exec', 'Cover', 'Missing')
+
+for morf in morfs:
+    _, statements, missing, readable = cov.analysis(morf)
+    num_statements = len(statements)
+    if not num_statements:
+        continue
+    total_statements += num_statements
+    num_tested = num_statements - len(missing)
+    total_tested += num_tested
+    if num_tested < num_statements:
+        if not test_results:
+            print header
+            print '-' * len(header)
+        test_results += 1
+        print str(fmt + "  %s") % (cov.morf_name(morf), num_statements,
+                num_tested, 100.0 * num_tested / num_statements,
+                str(readable))
+if total_tested < total_statements:
+    s = fmt % ('TOTAL', total_statements, total_tested, 100.0         
+            * total_tested / total_statements)
+    print '=' * len(s)
+    print s
+    print '\t*** ERROR: Test Coverage Incomplete ***'
+
+sys.exit(test_results)
+
