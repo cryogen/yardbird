@@ -185,3 +185,13 @@ class PrivilegedOperations(IoTowerTestCase):
         self._assert_missing('ponies')
 
         self.client.deop(self.client.my_hostmask, '#testing')
+
+class AncillaryStuff(IoTowerTestCase):
+    """Test behavior not related to factoids."""
+    def test_stats(self):
+        self._call_and_response('statistics are useful', 'statistics')
+        response = self.client.msg(self.client.nickname, 'stats')
+        self.assertContains(response,
+                'I have performed 1 edits on 1 factoids containing' +
+                ' 1 active responses', method='PRIVMSG')
+
