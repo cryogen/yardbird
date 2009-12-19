@@ -164,13 +164,28 @@ class PrivilegedOperations(IoTowerTestCase):
         self.assertTemplateUsed(response, 'ack.irc')
         self._assert_disallowed('literal the moon')
 
+        response = self.client.msg(self.client.nickname,
+                'the moon is also <reply>Nuke the moon!')
+        self.assertTemplateUsed(response, 'ack.irc')
+
         self.client.op(self.client.my_hostmask, '#testing')
         response = self.client.msg(self.client.nickname,
                 'literal the moon')
         self.assertContains(response, '=is=', method='PRIVMSG')
         self.assertContains(response, 'made of green cheese',
                 method='PRIVMSG')
+        self.assertContains(response, '|', method='PRIVMSG')
+        self.assertContains(response, '<reply> Nuke the moon!',
+                method='PRIVMSG')
         #self.assertTemplateUsed(response, 'literal.irc') # FIXME
+
+        response = self.client.msg(self.client.nickname,
+                'lock the moon')
+        self.assertTemplateUsed(response, 'ack.irc')
+        response = self.client.msg(self.client.nickname,
+                'literal the moon')
+        self.assertContains(response, ' [LOCKED] ', method='PRIVMSG')
+        
         self.client.deop(self.client.my_hostmask, '#testing')
 
     def test_delete(self):
