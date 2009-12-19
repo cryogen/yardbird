@@ -31,6 +31,10 @@ class Factoid(models.Model):
     fact = models.CharField(max_length=64, primary_key=True)
     protected = models.BooleanField(default=False)
     def __unicode__(self):
+        """
+        >>> Factoid('emad')
+        <Factoid: emad False>
+        """
         return u'%s %s' % (self.fact, self.protected)
 
 class FactoidResponse(models.Model):
@@ -45,6 +49,17 @@ class FactoidResponse(models.Model):
     disabled = models.DateTimeField(blank=True, null=True)
     disabled_by = models.CharField(max_length=30,blank=True, null=True)
     def __unicode__(self):
+        """
+        >>> fr = FactoidResponse(fact=Factoid('emad'), text='a troll',
+        ... created_by='SpaceHobo')
+        >>> fr.save()
+        >>> fr
+        <FactoidResponse: [1] ... <SpaceHobo> emad =is= a troll>
+        >>> fr.disabled = fr.created; fr.disabled_by = fr.created_by
+        >>> fr.save()
+        >>> fr
+        <FactoidResponse: [1] <SpaceHobo> ...-... <SpaceHobo>: emad =is= a troll>
+        """
         if self.disabled:
             return u'[%s] <%s> %s-%s <%s>: %s =%s= %s' % (self.pk,
                                                           self.created_by,
