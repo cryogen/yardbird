@@ -19,8 +19,7 @@ def normalize_factoid_key(key):
     key = re.sub(r'(?u)\s+', ' ', key)
     if 1 <= len(key) <= 64:
         return key
-    raise(exceptions.ValidationError,
-                "Normalized key '%s' not fit for database" % key)
+    raise(OverflowError, "Normalized key '%s' not fit for database" % key)
 
 def generate_statistics():
     fr = FactoidResponse.objects
@@ -85,7 +84,7 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
     try:
         return trigger(request,
                 key=request.message.split(':')[-1].strip())
-    except Http404, exceptions.ValidationError:
+    except Http404, OverflowError:
         # FIXME: This should be an edit conflict exception
         raise(exceptions.PermissionDenied, 'That factoid already exists!')
 

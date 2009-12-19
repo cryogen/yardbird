@@ -108,6 +108,11 @@ class FactoidTestCase(IoTowerTestCase):
         response = self.client.msg(self.client.nickname, 'perl')
         self.assertNotContains(response, 'the', method='PRIVMSG')
 
+    def test_bogus_factoid(self):
+        bogomsg = '%s =is= bogus' % ('a' * 65)
+        self.assertRaises(OverflowError, self.client.msg,
+                self.client.nickname, bogomsg)
+
 class FactoidOddities(IoTowerTestCase):
     """Sometimes setting a factoid doesn't do what you expect."""
     def test_trigger_with_is(self):
