@@ -195,7 +195,7 @@ class PrivilegedOperations(IoTowerTestCase):
 
         self.client.op(self.client.my_hostmask, '#testing')
         response = self.client.msg(self.client.nickname,
-                'ponies =~ g/pretty/d')
+                'ponies =~ gi/PrEtTy/d')
         self.assertTemplateUsed(response, 'ack.irc')
         self._assert_missing('ponies')
 
