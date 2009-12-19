@@ -201,6 +201,44 @@ class PrivilegedOperations(IoTowerTestCase):
 
         self.client.deop(self.client.my_hostmask, '#testing')
 
+    def test_undelete(self):
+        response = self._call_and_response('ponies are pretty',
+                'ponies')
+
+        self.client.op(self.client.my_hostmask, '#testing')
+        response = self.client.msg(self.client.nickname,
+                'ponies =~ gi/PrEtTy/d')
+        self.assertTemplateUsed(response, 'ack.irc')
+
+        response = self.client.msg(self.client.nickname,
+                'undelete ponies')
+        self.assertTemplateUsed(response, 'ack.irc')
+
+        self.client.deop(self.client.my_hostmask, '#testing')
+
+        response = self.client.msg(self.client.nickname, 'ponies')
+        self.assertContains(response, 'ponies are pretty', method='PRIVMSG')
+
+    def test_unedit(self):
+        response = self._call_and_response('perl is the shiznit',
+                'perl')
+
+        self.client.op(self.client.my_hostmask, '#testing')
+        response = self.client.msg(self.client.nickname,
+                'perl =~ s/the //')
+        self.assertTemplateUsed(response, 'factoid.irc')
+
+        self.assertRaises(Http404, self.client.msg,
+                self.client.nickname, 'unedit pearl')
+        response = self.client.msg(self.client.nickname, 'unedit perl')
+        self.assertTemplateUsed(response, 'ack.irc')
+        self.client.deop(self.client.my_hostmask, '#testing')
+
+        response = self.client.msg(self.client.nickname, 'perl')
+        self.assertContains(response, 'the shiznit', method='PRIVMSG')
+
+
+
 class AncillaryStuff(IoTowerTestCase):
     """Test behavior not related to factoids."""
     def test_stats(self):
