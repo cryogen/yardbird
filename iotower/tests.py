@@ -1,3 +1,231 @@
+"""
+=======
+IOTower
+=======
+
+---------------------------
+An Infobot App for Yardbird
+---------------------------
+
+::
+
+	 / ,     . \
+	( ( ( O ) ) )
+	 \ `  |  ' /
+	      |
+	    /===\
+	    |\ /|
+	    | X |
+	    |/ \|
+	   /=====\
+	   |\   /|
+	   | \ / |
+	   |  X  |
+	   | / \ |
+	   |/   \|
+
+IOTower is a reimplementation of Kevin Lenzo's famous Infobot as a
+Yardbird app.  Infobots were originally  meant to sit idle in a channel
+and listen for declarative statements containing the verbs "is" or
+"are", then spit this tidbit of knowledge back at the channel if someone
+asks the right question.  They pretend to be helpful users in your
+channel, and as such they break RFC bot etiquette and use PRIVMSG
+instead of NOTICE for their replies.
+
+To demonstrate the behavior of a stock IOTower bot, we will be using the
+yardbird test client::
+
+    >>> from yardbird.test.client import Client
+    >>> c = Client(user='TestUser!testuser@localhost',
+    ... bot='TestBot!testbot@localhost', ROOT_MSGCONF='example')
+
+Factoids
+--------
+
+Factoids are key->value mappings stored in the database.  The simplest
+way to create one is to state a phrase containing the word "is" or
+"are", and the factoid can then be retrieved with a "what is" or "what
+are" question::
+
+    >>> print c.msg(c.nickname, 'emad is a troll')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'what is emad?')
+    PRIVMSG: [...'factoid.irc'...] emad is a troll -> TestUser
+
+The question format is somewhat forgiving, and the default
+``commands.py`` allows for common variations in how the question is
+asked::
+
+    >>> print c.msg(c.nickname, 'what on earth is emad?')
+    PRIVMSG: [...'factoid.irc'...] emad is a troll -> TestUser
+    >>> print c.msg(c.nickname, 'emad?')
+    PRIVMSG: [...'factoid.irc'...] emad is a troll -> TestUser
+
+Or it need not even be a question at all::
+
+    >>> print c.msg(c.nickname, 'emad!')
+    PRIVMSG: [...'factoid.irc'...] emad is a troll -> TestUser
+
+Once a factoid has a response associated with it, the standard assertion
+syntax will not work::
+
+    >>> print c.msg(c.nickname, 'emad is a troll')
+    PRIVMSG: [...'already.irc'...] I already had it that way, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'emad is your best nightmare!')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+
+To append to an existing factoid, you need to use the word "also"::
+
+    >>> print c.msg(c.nickname, 'emad is also your best nightmare!')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+
+Nonstandard Verbs
+~~~~~~~~~~~~~~~~~
+
+The verbs "is" and "are" hold special status in the bot.  Another verb
+may be specified by surrounding it in equal signs::
+
+    >>> print c.msg(c.nickname, 'Python =loves= invisible syntax.')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'python')
+    PRIVMSG: [...'factoid.irc'...] python loves invisible syntax. -> TestUser
+    >>> print c.msg(c.nickname, 'Python also =hates= implicit variables')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+
+Although factoids with multiple responses will choose at random when
+queried, you can specify a particular verb by asking the question "What
+does *factoid* *verb*" where "verb" can have a final 's' added to become
+the verb stored in the database::
+
+    >>> print c.msg(c.nickname, 'what does python love?')
+    PRIVMSG: [...'factoid.irc'...] python loves invisible syntax. -> TestUser
+    >>> print c.msg(c.nickname, 'what does PYTHON hate?')
+    PRIVMSG: [...'factoid.irc'...] PYTHON hates implicit variables -> TestUser
+
+Behavioral Tags
+~~~~~~~~~~~~~~~
+
+IOTower, like Infobot before it, pretends to be an actual user.  To make
+responses more flexible (and thus realistic) it is possible to avoid the
+predictable factoid format by using ``<reply>`` or ``<action>`` tags.
+
+The ``<reply>`` tag allows you to specify the response in full, omitting
+the factoid name and verb::
+
+    >>> print c.msg(c.nickname, "love is <reply> Baby don't hurt me!")
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'What is love?')
+    PRIVMSG: [...'factoid-reply.irc'...] Baby don't hurt me! -> TestUser
+
+The ``<action>`` tag also allows you to specify the response in full,
+but uses ACTION instead of PRIVMSG to deliver the reply, as though the
+bot had typed ``/me`` in an IRC client::
+
+    >>> print c.msg(c.nickname, 'whatever is <action> shrugs')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'whatever')
+    ACTION: [...'factoid-action.irc'...] shrugs -> TestUser
+
+Factoids as Templates
+~~~~~~~~~~~~~~~~~~~~~
+
+To further the effect, factoids are rendered as Django templates.  These
+templates have access to all of the request variables such as ``nick``
+and ``channel`` as well as all of the standard template tags and
+functions::
+
+    >>> print c.msg(c.nickname, "hello is <reply> Howdy, {{nick}}!")
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'Hello!')
+    PRIVMSG: [...'factoid-reply.irc'...] Howdy, TestUser! -> TestUser
+
+    >>> print c.msg(c.nickname, 
+    ...             'the day of the week is <reply> Today is {% now "l" %}')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, "What's the day of the week?")
+    PRIVMSG: [...'factoid-reply.irc'...] Today is ...day -> TestUser
+
+Editing Factoids
+~~~~~~~~~~~~~~~~
+
+Factoids can be edited using a regex substitution syntax similar to that
+used by Perl.  This syntax comes directly from Infobot, and is kept
+largely for historical reasons::
+
+    >>> print c.msg(c.nickname, 'perl is the shiznit')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'perl =~ s/the/complete/')
+    PRIVMSG: [...'factoid.irc'...] perl is complete shiznit -> TestUser
+
+Limits to Factoid Keys
+----------------------
+
+As a note, factoid keys are normalized before storage in the database.
+These normalized keys are limited to 64 characters, tops::
+
+    >>> print c.msg(c.nickname, '%s =is= bogus' % ('a' * 65))
+    Traceback (most recent call last):
+        ...
+    OverflowError
+
+Some factoids will look like attempts to train a bot with other
+factoids::
+
+    >>> print c.msg(c.nickname, 'A is a letter.')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'A is A =is= a tautology.')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'what is a?')
+    PRIVMSG: [...'factoid.irc'...] a is a letter. -> TestUser
+    >>> print c.msg(c.nickname, 'A is A')
+    PRIVMSG: [...'factoid.irc'...] A is A is a tautology. -> TestUser
+
+Signal Handlers
+---------------
+
+Many Infobots out in the wild have been hacked full of customizations
+that do not fit the factoid model.  Yardbird takes advantage of the
+Django signal system to raise signals before and after a dispatched
+request has been serviced, and this is an excellent place to put your
+customized handlers.
+
+We will demonstrate with the Yardbird test client's mock sender queue,
+which stores all the actions any handlers tried to perform::
+
+    >>> c.signal_sender
+    []
+    >>> c.msg(c.nickname, '242')
+    Traceback (most recent call last):
+        ...
+    Http404: No Factoid matches the given query.
+    >>> c.signal_sender.get_event()
+    (('notice', 'TestUser', '242 sighting!'), {})
+
+Here our *242 sighting* handler called ``sender.notice('TestUser', '242
+sighting!')`` and we caught it, even though the actual request raised an
+error because no such factoid exists.
+
+The *242 sighting* handler has a very forgiving regex, and all kinds of
+things can go between the digits:: 
+
+    >>> print c.msg(c.nickname,
+    ...             '2 is the loneliest number, but 4 times 2 is 8')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
+    >>> c.signal_sender.get_event()
+    (('notice', 'TestUser', '242 sighting!'), {})
+
+The bot's own responses do not trigger these handlers, though::
+
+    >>> print c.msg(c.nickname, 'What is 2?')
+    PRIVMSG: [...'factoid.irc'...] 2 is the loneliest number, but 4 times 2 is 8 -> TestUser
+    >>> c.signal_sender
+    []
+
+
+
+"""
 import unittest
 from yardbird.test import TestCase
 from django.core import exceptions
@@ -23,112 +251,6 @@ class IoTowerTestCase(TestCase):
     def _assert_missing(self, message):
         self.assertRaises(Http404, self.client.msg,
                 self.client.nickname, message)
-
-class TwoFourTwoTestCase(IoTowerTestCase):
-    """This demonstrates how one can write tests to verify the result of
-    a signal handler, which can pull the bot's strings arbitrarily.
-    Since the client has a signal_sender, we can analyze the args (of
-    which the first is the name of the bot method called) and the
-    kwargs."""
-    def _trigger_242(self, text):
-        self.failUnless(not self.client.signal_sender)
-        self.assertRaises(Http404, self.client.msg,
-                self.client.nickname, text)
-        args, kwargs = self.client.signal_sender.get_event()
-        self.assertEqual(args,
-                ('notice', self.client.my_nickname, '242 sighting!'))
-        self.failUnless(not self.client.signal_sender)
-    def test_plain_242(self):
-        self._trigger_242('242')
-    def test_punctuated_242(self):
-        self._trigger_242('2:4-2')
-    def test_obfuscated_242(self):
-        self._trigger_242(
-            "I spent 2 dollars on 4 monkeys! That means 2 for a dollar!")
-    def test_factoided_242(self):
-        self.failUnless(not self.client.signal_sender)
-        self._call_and_response(
-            '2 is the loneliest number, but 4 times 2 is 8', 'what is 2')
-        args, kwargs = self.client.signal_sender.get_event()
-        self.assertEqual(args,
-                ('notice', self.client.my_nickname, '242 sighting!'))
-        self.failUnless(not self.client.signal_sender)
-
-class FactoidTestCase(IoTowerTestCase):
-    """Test all the ways we can set and retrieve factoids."""
-
-    def test_set_factoid(self):
-        self._call_and_response('emad is a troll', 'what is emad?')
-    def test_append_factoid(self):
-        self._call_and_response('clavicle is a brazillion',
-                'what is clavicle?')
-        self._assert_disallowed('clavicle is a collarbone')
-        response = self.client.msg(self.client.nickname,
-                'clavicle is also a collarbone')
-        self.assertTemplateUsed(response, 'ack.irc') # successful set
-
-    def test_incredulous_request(self):
-        self._call_and_response('sinkers are doughnuts',
-                'what in the name of emad are sinkers???')
-    def test_short_request(self):
-        self._call_and_response('goobers are peanuts', 'goobers')
-
-    def test_explicit_verb(self):
-        self._call_and_response('apple =hates= your freedom',
-                'what does apple hate?', 'apple hates your freedom')
-    def test_append_explicit_factoid(self):
-        self._call_and_response('python =loves= invisible syntax',
-                'what does python love?', 'python loves invisible syntax')
-        self.assertRaises(exceptions.PermissionDenied, self.client.msg,
-                self.client.nickname, 'python =hates= implicit variables')
-        self._call_and_response('python also =hates= implicit variables',
-                'what does python hate?', 'python hates implicit variables')
-
-    def test_reply_tag(self):
-        self._call_and_response("love is <reply> Baby don't hurt me!",
-                'what is love?', "Baby don't hurt me!",
-                template='factoid-reply.irc')
-
-    def test_action_tag(self):
-        self._call_and_response("whatever is <action> shrugs",
-                'whatever', "shrugs", method='ACTION',
-                template='factoid-action.irc')
-
-    def test_factoid_template_rendering(self):
-        self._call_and_response("beats me is <action> beats {{nick}}",
-                'beats me', "beats %s" % self.client.my_nickname,
-                method='ACTION', template='factoid-action.irc')
-
-    def test_edit(self):
-        response = self._call_and_response('perl is the shiznit',
-                'perl')
-        response = self.client.msg(self.client.nickname,
-                'perl =~ s/the //')
-        self.assertTemplateUsed(response, 'factoid.irc')
-        response = self.client.msg(self.client.nickname, 'perl')
-        self.assertNotContains(response, 'the', method='PRIVMSG')
-
-    def test_bogus_factoid(self):
-        bogomsg = '%s =is= bogus' % ('a' * 65)
-        self.assertRaises(OverflowError, self.client.msg,
-                self.client.nickname, bogomsg)
-
-class FactoidOddities(IoTowerTestCase):
-    """Sometimes setting a factoid doesn't do what you expect."""
-    def test_trigger_with_is(self):
-        self._call_and_response("A is a letter.", "What is A?")
-        self._call_and_response("A is A =is= a tautology.", "A is A",
-                "A is A is a tautology.")
-    def test_existing_response(self):
-        self._call_and_response(
-                "C is for coffee, dat good enough for me!",
-                "What is C?")
-        response = self.client.msg(self.client.nickname,
-                "C is for coffee, dat good enough for me!")
-        self.assertTemplateUsed(response, 'already.irc')
-        response = self.client.msg(self.client.nickname,
-                "C is also for coffee, dat good enough for me!")
-        self.assertTemplateUsed(response, 'already.irc')
 
 class PrivilegedOperations(IoTowerTestCase):
     """Test all the commands that require elevated privilege"""

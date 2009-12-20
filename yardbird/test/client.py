@@ -22,24 +22,28 @@ from django.core import urlresolvers
 from django.test import signals
 from django.test.client import store_rendered_templates
 from django.utils.functional import curry
+from django.test.testcases import to_list
 
 class TestResponse(IRCResponse):
     """
     This is a rough parallel to the core django testing Response object.
-    Unfortunately because we render templates so early in the process
-    (something that will need revisiting), we are unable to return any
-    template/context info.
     """
     def __init__(self, response, request, client, opts):
         self.request = request
         self.client = client
         self.recipient = response.recipient.encode('utf-8')
         self.content = response.data.encode('utf-8')
-        self.data = self.content # historic for __unicode__()
         self.method = response.method
         self.opts = opts
+        self.template = []
         self._charset = 'utf-8' # It's the Network Byte Order of
                                 # charsets.  Deal with it.
+    def __unicode__(self):
+        self.template_names = [t.name for t in to_list(self.template)]
+        fmt = u'%(method)s: %(template_names)s %(content)s -> '
+        fmt += u'%(recipient)s' 
+        return fmt % self.__dict__
+
 
 class MockSignalSender(list):
     """This is meant to be used as the sender= parameter for django

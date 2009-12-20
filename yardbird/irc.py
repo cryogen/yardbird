@@ -31,6 +31,8 @@ class IRCRequest(object):
             self.reply_recipient = self.channel
     def __unicode__(self):
         return u'%s: <%s> %s' % (self.channel, self.user, self.message)
+    def __str__(self):
+        return self.__unicode__()
 
 
 class IRCResponse(object):
@@ -42,3 +44,5 @@ class IRCResponse(object):
         self.context = kwargs
     def __unicode__(self):
         return u'%s: <%s> %s' % (self.method, self.recipient, self.data)
+    def __str__(self):
+        return self.__unicode__()

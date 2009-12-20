@@ -73,9 +73,10 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
             return render_quick_reply(request, "already.irc")
     else:
         try:
-            factext = FactoidResponse.objects.get(fact=factoid,
-                    verb=verb, text=value, tag=tag)
-            return render_quick_reply(request, "already.irc")
+            num_responses = FactoidResponse.objects.filter(fact=factoid,
+                    verb=verb, text=value, tag=tag).count()
+            if num_responses:
+                return render_quick_reply(request, "already.irc")
         except FactoidResponse.DoesNotExist:
             pass
 
