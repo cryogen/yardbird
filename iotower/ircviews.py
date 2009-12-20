@@ -72,13 +72,10 @@ def learn(request, key='', verb='is', value='', also='', tag='', **kwargs):
                 return render_quick_reply(request, "ack.irc")
             return render_quick_reply(request, "already.irc")
     else:
-        try:
-            num_responses = FactoidResponse.objects.filter(fact=factoid,
-                    verb=verb, text=value, tag=tag).count()
-            if num_responses:
-                return render_quick_reply(request, "already.irc")
-        except FactoidResponse.DoesNotExist:
-            pass
+        num_responses = FactoidResponse.objects.filter(fact=factoid,
+                verb=verb, text=value, tag=tag).count()
+        if num_responses:
+            return render_quick_reply(request, "already.irc")
 
     # If we got this far, it's worth trying to see if this is just a
     # factoid with 'is' or 'are' in the key.

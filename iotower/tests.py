@@ -38,6 +38,7 @@ yardbird test client::
     >>> from yardbird.test.client import Client
     >>> c = Client(user='TestUser!testuser@localhost',
     ... bot='TestBot!testbot@localhost', ROOT_MSGCONF='example')
+    >>> c.privileged_channels.append('#testing')
 
 Factoids
 --------
@@ -159,6 +160,16 @@ largely for historical reasons::
     >>> print c.msg(c.nickname, 'perl =~ s/the/complete/')
     PRIVMSG: [...'factoid.irc'...] perl is complete shiznit -> TestUser
 
+Edits are one operation that require the bot be addressed (if in a
+public channel) or privately messaged (as we have been doing so far)::
+
+    >>> print c.join('#testing')
+    None
+    >>> print c.msg('#testing', 'perl =~ s/complete/utter/')
+    QUIET: []  -> 
+    >>> print c.msg('#testing', 'TestBot: perl =~ s/complete/utter/')
+    PRIVMSG: [...'factoid.irc'...] TestUser: perl is utter shiznit -> #testing
+
 Limits to Factoid Keys
 ----------------------
 
@@ -181,6 +192,56 @@ factoids::
     PRIVMSG: [...'factoid.irc'...] a is a letter. -> TestUser
     >>> print c.msg(c.nickname, 'A is A')
     PRIVMSG: [...'factoid.irc'...] A is A is a tautology. -> TestUser
+
+Privileged Operations
+---------------------
+
+Some operations only work when a user is trusted.  Yardbird defines a
+trusted user as one that has operator privilege in a predefined trusted
+channel::
+
+    >>> opc = Client(user='SuperUser!superuser@localhost',
+    ... bot='TestBot!testbot@localhost', ROOT_MSGCONF='example')
+    >>> opc.join('#testing')
+    >>> opc.op(opc.my_hostmask, '#testing')
+    >>> opc.privileged_channels.append('#testing')
+
+Note that from here on, we now have two clients (``c`` and ``opc``) in
+the ``#testing`` channel, and we will send most of our communication
+with the bot through that channel.
+
+Lock
+~~~~
+
+Locking and unlocking factoids is only available to privileged users.
+This prevents a much-loved factoid from being damaged by a user that
+does not appreciate this::
+
+    >>> print c.msg('#testing', 'TestBot: lock python')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+    >>> print opc.msg('#testing', 'TestBot: lock python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print c.msg('#testing',
+    ... 'TestBot: python also =haxxors= j00!!! Hacked by TestClient!!!!!')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+
+Even privileged users are unable to modify the factoid until it is
+unlocked::
+
+    >>> print opc.msg('#testing', 'TestBot: python is also free to use')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+    >>> print opc.msg('#testing', 'TestBot: unlock python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: python is also free to use')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+
+
 
 Signal Handlers
 ---------------
@@ -258,27 +319,6 @@ class PrivilegedOperations(IoTowerTestCase):
         self.client.join('#testing')
         self.client.privileged_channels.append('#testing')
         self.client.join('#moretests')
-    def test_locking(self):
-        self._assert_disallowed('lock the door')
-        self.client.op(self.client.my_hostmask, '#testing')
-
-        r = self.client.msg(self.client.nickname, 'lock the door')
-        self.assertTemplateUsed(r, 'ack.irc')
-        self._assert_disallowed('the door is ajar')
-
-        self.client.deop(self.client.my_hostmask, '#testing')
-        self._assert_disallowed('unlock the door')
-        self.client.op(self.client.my_hostmask, '#testing')
-
-        r = self.client.msg(self.client.nickname, 'unlock the door')
-        self.assertTemplateUsed(r, 'ack.irc')
-
-        # Unlocked, but we cannot create it as a new factoid any more
-        self._assert_disallowed('the door is ajar')
-        r = self.client.msg(self.client.nickname, 'the door is also ajar')
-        self.assertTemplateUsed(r, 'ack.irc')
-
-        self.client.deop(self.client.my_hostmask, '#testing')
 
     def test_literal(self):
         response = self.client.msg(self.client.nickname,
