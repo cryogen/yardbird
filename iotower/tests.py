@@ -105,6 +105,12 @@ the verb stored in the database::
     >>> print c.msg(c.nickname, 'what does PYTHON hate?')
     PRIVMSG: [...'factoid.irc'...] PYTHON hates implicit variables -> TestUser
 
+If you specify a verb that does not appear for the specified factoid, it
+will select at random::
+
+    >>> print c.msg(c.nickname, 'what does emad do?')
+    PRIVMSG: [...'factoid.irc'...] emad is ... -> TestUser
+
 Behavioral Tags
 ~~~~~~~~~~~~~~~
 
@@ -206,12 +212,13 @@ channel::
     >>> opc.op(opc.my_hostmask, '#testing')
     >>> opc.privileged_channels.append('#testing')
 
-Note that from here on, we now have two clients (``c`` and ``opc``) in
-the ``#testing`` channel, and we will send most of our communication
-with the bot through that channel.
+Note that from here on, we now have two clients (the unprivileged user
+``c`` and the privileged user ``opc``) in the ``#testing`` channel, and
+we will send most of our communication with the bot through that
+channel.
 
-Lock
-~~~~
+Lock and Unlock
+~~~~~~~~~~~~~~~
 
 Locking and unlocking factoids is only available to privileged users.
 This prevents a much-loved factoid from being damaged by a user that
@@ -241,7 +248,111 @@ unlocked::
     >>> print opc.msg('#testing', 'TestBot: python is also free to use')
     PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
 
+Literal
+~~~~~~~
 
+The ``literal`` command displays a complete listing of responses for a
+given factoid, grouped by verb.  Because this listing can be arbitrarily
+long, this command is restricted to privileged users in order to avoid
+channel flooding::
+
+    >>> print c.msg('#testing', 'TestBot: python is also really fun')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> #testing
+    >>> print c.msg('#testing', 'TestBot: python also =loves= FUN')
+    PRIVMSG: ['ack.irc'] Roger that, TestUser. -> #testing
+    >>> print c.msg('#testing', 'TestBot: literal python')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+
+The order of the verbs in the listing is alphabetical, and factoids are
+sorted chronologically within those::
+
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python =hates= implicit variables =is= free to \
+            use|really fun =loves= invisible syntax.|FUN -> #testing
+
+The locked status of factoids is displayed in the literal output::
+
+    >>> print opc.msg('#testing', 'TestBot: lock emad')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal emad')
+    PRIVMSG: [] emad [LOCKED]  =is= a troll|your best nightmare! \
+            -> #testing
+
+
+Delete and Undelete
+~~~~~~~~~~~~~~~~~~~
+
+Deletion and undeletion require privilege.  The syntax for deletion is
+a vi/ex-inspired extension of the edit syntax, allowing you to specify a
+regex for selection of which factoids to replace::
+
+    >>> print c.msg('#testing', 'TestBot: python =~ g/s/d')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+    >>> print opc.msg('#testing', 'TestBot: python =~ g/s/d')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python =is= really fun =loves= FUN -> #testing
+
+Undeletion also requires privilege and addressing, but restores only the
+one most recently deleted response:: 
+
+    >>> print c.msg('#testing', 'TestBot: undelete python')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+    >>> print opc.msg('#testing', 'TestBot: undelete python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python =is= really fun =loves= invisible syntax.|FUN \
+            -> #testing
+    >>> print opc.msg('#testing', 'TestBot: undelete python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python =hates= implicit variables =is= really fun \
+            =loves= invisible syntax.|FUN -> #testing
+    >>> print opc.msg('#testing', 'TestBot: undelete python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python =hates= implicit variables =is= free to \
+            use|really fun =loves= invisible syntax.|FUN -> #testing
+
+If no deleted responses can be found, an error is sent directly to the
+user::
+
+    >>> print opc.msg('#testing', 'TestBot: undelete python')
+    NOTICE: [] No deleted response found for python -> SuperUser
+
+The 'i' flag may be used to specify case-insensitive deletion::
+
+    >>> print opc.msg('#testing', 'TestBot: python =~ gi/Fun/d')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python =hates= implicit variables =is= free to use \
+           =loves= invisible syntax. -> #testing
+
+Unedit
+~~~~~~
+
+As with undelete, you can un-edit factoid changes::
+
+    >>> print opc.msg('#testing', 'TestBot: literal perl')
+    PRIVMSG: [] perl =is= utter shiznit -> #testing
+    >>> print opc.msg('#testing', 'TestBot: unedit perl')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal perl')
+    PRIVMSG: [] perl =is= complete shiznit -> #testing
+
+Stats
+-----
+
+IOTower supports the Yardbird ``gather_statistics`` system:
+
+    >>> print opc.msg('#testing', 'TestBot: stats')
+    PRIVMSG: ['stats.irc'] SuperUser: Since ... I have performed 18 edits on 9 factoids containing 12 active responses -> #testing
 
 Signal Handlers
 ---------------
@@ -287,126 +398,3 @@ The bot's own responses do not trigger these handlers, though::
 
 
 """
-import unittest
-from yardbird.test import TestCase
-from django.core import exceptions
-from django.http import Http404
-
-class IoTowerTestCase(TestCase):
-    msgconf = 'example' # Test using the distributed privmsg.py et al
-
-    def _call_and_response(self, assertion, query, substring=None,
-            method='PRIVMSG', template='factoid.irc'):
-        if not substring:
-            substring = assertion
-        response = self.client.msg(self.client.nickname, assertion)
-        self.assertTemplateUsed(response, 'ack.irc') # successful set
-
-        response = self.client.msg(self.client.nickname, query)
-        self.assertTemplateUsed(response, template) # trigger
-        self.assertContains(response, substring, method=method)
-
-    def _assert_disallowed(self, message):
-        self.assertRaises(exceptions.PermissionDenied, self.client.msg,
-                self.client.nickname, message)
-    def _assert_missing(self, message):
-        self.assertRaises(Http404, self.client.msg,
-                self.client.nickname, message)
-
-class PrivilegedOperations(IoTowerTestCase):
-    """Test all the commands that require elevated privilege"""
-    def setUp(self):
-        self.client.join('#testing')
-        self.client.privileged_channels.append('#testing')
-        self.client.join('#moretests')
-
-    def test_literal(self):
-        response = self.client.msg(self.client.nickname,
-                'the moon is made of green cheese')
-        self.assertTemplateUsed(response, 'ack.irc')
-        self._assert_disallowed('literal the moon')
-
-        response = self.client.msg(self.client.nickname,
-                'the moon is also <reply>Nuke the moon!')
-        self.assertTemplateUsed(response, 'ack.irc')
-
-        self.client.op(self.client.my_hostmask, '#testing')
-        response = self.client.msg(self.client.nickname,
-                'literal the moon')
-        self.assertContains(response, '=is=', method='PRIVMSG')
-        self.assertContains(response, 'made of green cheese',
-                method='PRIVMSG')
-        self.assertContains(response, '|', method='PRIVMSG')
-        self.assertContains(response, '<reply> Nuke the moon!',
-                method='PRIVMSG')
-        #self.assertTemplateUsed(response, 'literal.irc') # FIXME
-
-        response = self.client.msg(self.client.nickname,
-                'lock the moon')
-        self.assertTemplateUsed(response, 'ack.irc')
-        response = self.client.msg(self.client.nickname,
-                'literal the moon')
-        self.assertContains(response, ' [LOCKED] ', method='PRIVMSG')
-        
-        self.client.deop(self.client.my_hostmask, '#testing')
-
-    def test_delete(self):
-        response = self._call_and_response('ponies are pretty',
-                'ponies')
-        self._assert_disallowed('ponies =~ g/pretty/d')
-
-        self.client.op(self.client.my_hostmask, '#testing')
-        response = self.client.msg(self.client.nickname,
-                'ponies =~ gi/PrEtTy/d')
-        self.assertTemplateUsed(response, 'ack.irc')
-        self._assert_missing('ponies')
-
-        self.client.deop(self.client.my_hostmask, '#testing')
-
-    def test_undelete(self):
-        response = self._call_and_response('ponies are pretty',
-                'ponies')
-
-        self.client.op(self.client.my_hostmask, '#testing')
-        response = self.client.msg(self.client.nickname,
-                'ponies =~ gi/PrEtTy/d')
-        self.assertTemplateUsed(response, 'ack.irc')
-
-        response = self.client.msg(self.client.nickname,
-                'undelete ponies')
-        self.assertTemplateUsed(response, 'ack.irc')
-
-        self.client.deop(self.client.my_hostmask, '#testing')
-
-        response = self.client.msg(self.client.nickname, 'ponies')
-        self.assertContains(response, 'ponies are pretty', method='PRIVMSG')
-
-    def test_unedit(self):
-        response = self._call_and_response('perl is the shiznit',
-                'perl')
-
-        self.client.op(self.client.my_hostmask, '#testing')
-        response = self.client.msg(self.client.nickname,
-                'perl =~ s/the //')
-        self.assertTemplateUsed(response, 'factoid.irc')
-
-        self.assertRaises(Http404, self.client.msg,
-                self.client.nickname, 'unedit pearl')
-        response = self.client.msg(self.client.nickname, 'unedit perl')
-        self.assertTemplateUsed(response, 'ack.irc')
-        self.client.deop(self.client.my_hostmask, '#testing')
-
-        response = self.client.msg(self.client.nickname, 'perl')
-        self.assertContains(response, 'the shiznit', method='PRIVMSG')
-
-
-
-class AncillaryStuff(IoTowerTestCase):
-    """Test behavior not related to factoids."""
-    def test_stats(self):
-        self._call_and_response('statistics are useful', 'statistics')
-        response = self.client.msg(self.client.nickname, 'stats')
-        self.assertContains(response,
-                'I have performed 1 edits on 1 factoids containing' +
-                ' 1 active responses', method='PRIVMSG')
-

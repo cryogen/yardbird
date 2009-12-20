@@ -157,7 +157,7 @@ def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
         if pat.search(response.text):
             answer = fn(response, pattern=pat, factoid=factoid,
                     responses=responses)
-            if answer and multiple and count:
+            if answer and multiple:
                 ret.append(answer)
             elif answer:
                 return answer
