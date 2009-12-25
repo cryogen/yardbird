@@ -11,39 +11,29 @@ notifications to the desktop GUI.
 
 import os
 import sys
-import coverage
+from subprocess import call
 
 import gtk
 import pynotify     # Display notifications
 import pyinotify    # Filesystem event monitoring
 
-from example import manage
+import coverage
 
 app_name = 'Yardbird'
 pynotify.init("%s Tests" % app_name)
 
 def run_tests():
-    old_argv = sys.argv
-    sys.argv = ['./manage.py', 'test']
-
-    try:
-        reload(manage)
-        manage.execute_manager(manage.settings)
-    except SystemExit, num_failed:
-        notify_tests_failed(int(str(num_failed)))
+    num_failed = call(['./manage.py', 'test'], cwd='example')
+    if num_failed:
+        notify_tests_failed(num_failed)
         return False
-    finally:
-        sys.argv = old_argv
     return True
 
 def generate_coverage():
+    num_failed = call(['python', '../coverage.py', '-x', './manage.py', 'test'], cwd='example')
     cov = coverage.the_coverage
-    olddir = os.getcwd()
-    os.chdir('example')
-    cov.command_line(['-x', './manage.py', 'test'])
-    cov.stop()
-    cov.save()
-    os.chdir(olddir)
+    cov.use_cache(True, cache_file='./example/.coverage')
+    cov.get_ready()
     return cov
 
 def coverage_report(cov):
@@ -71,6 +61,7 @@ def coverage_report(cov):
         percentage = 100.0 * total_tested / total_statements
         notify_incomplete_coverage(percentage, report)
     else:
+        print total_tested, total_statements
         notify_complete_coverage()
     return report
 
@@ -117,8 +108,7 @@ class SourceChanged(pyinotify.ProcessEvent):
             return
         if run_tests():
             notify_tests_passed()
-            cov = generate_coverage()
-            coverage_report(cov)
+            coverage_report(generate_coverage())
 
 
 def autorun_tests():
