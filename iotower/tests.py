@@ -174,6 +174,8 @@ public channel) or privately messaged (as we have been doing so far)::
     >>> print c.join('#testing')
     None
     >>> print c.msg('#testing', 'perl =~ s/complete/utter/')
+    NOTICE: [] You must address me to perform this operation. -> TestUser
+    >>> print c.msg('#testing', 'Dude: perl =~ s/complete/utter/')
     QUIET: []  -> 
     >>> print c.msg('#testing', 'TestBot: perl =~ s/complete/utter/')
     PRIVMSG: [...'factoid.irc'...] TestUser: perl is utter shiznit -> #testing

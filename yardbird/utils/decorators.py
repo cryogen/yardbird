@@ -8,7 +8,7 @@ def require_addressing(function):
     def new(request, *args, **kwargs):
         if request.addressed:
             return function(request, *args, **kwargs)
-        if 'addressee' in kwargs:
+        if 'addressee' in kwargs and kwargs['addressee']:
             return render_silence()
         else:
             return render_error(request,
