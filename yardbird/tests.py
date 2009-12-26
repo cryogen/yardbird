@@ -24,6 +24,7 @@ class TestCaseTestCase(TestCase):
         response = self.client.msg(self.client.nickname,
                                 '242 is an auspicious number')
         self.assertTemplateUsed(response, 'ack.irc')
+        self.assertContains(response, "Roger that", method='PRIVMSG')
         self.assertContains(response, "Roger that", method='PRIVMSG',
                 count=1)
         self.assertNotContains(response, "sandwiches", method='PRIVMSG')

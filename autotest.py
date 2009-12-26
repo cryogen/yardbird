@@ -30,6 +30,7 @@ def run_tests():
     return True
 
 def generate_coverage():
+    os.unlink('./example/.coverage')
     num_failed = call(['python', '../coverage.py', '-x', './manage.py', 'test'], cwd='example')
     reload(coverage)
     cov = coverage.the_coverage
