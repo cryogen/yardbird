@@ -10,7 +10,7 @@ class IRCRequest(object):
         self.user = user
         if '!' in user:
             self.nick, self.mask = user.split('!', 1)
-        else:
+        else: # pragma: nocover
             self.nick, self.mask = user, None
         self.channel = force_unicode(channel)
         self.privileged_channels = [force_unicode(x) for x in
@@ -29,9 +29,9 @@ class IRCRequest(object):
         else:
             self.addressed = False
             self.reply_recipient = self.channel
-    def __unicode__(self):
+    def __unicode__(self): # pragma: nocover
         return u'%s: <%s> %s' % (self.channel, self.user, self.message)
-    def __str__(self):
+    def __str__(self): # pragma: nocover
         return self.__unicode__()
 
 
@@ -42,7 +42,7 @@ class IRCResponse(object):
         self.data = force_unicode(data)
         self.method = method
         self.context = kwargs
-    def __unicode__(self):
+    def __unicode__(self): # pragma: nocover
         return u'%s: <%s> %s' % (self.method, self.recipient, self.data)
-    def __str__(self):
+    def __str__(self): # pragma: nocover
         return self.__unicode__()
