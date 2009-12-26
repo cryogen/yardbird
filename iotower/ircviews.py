@@ -228,11 +228,8 @@ def undelete(request, key='', pattern='.', re_flags='', **kwargs):
 @require_chanop
 def unedit(request, key='', pattern='.', re_flags='', **kwargs):
     def unedit_response(response, factoid=None, **kwargs):
-        try:
-            oldresponse = factoid.factoidresponse_set.get(
-                    disabled__exact=response.created)
-        except:
-            return None
+        oldresponse = factoid.factoidresponse_set.get(
+                disabled__exact=response.created)
         edited = replace_response(response, oldresponse.text,
                 request.nick)
         return edited.text
@@ -240,7 +237,4 @@ def unedit(request, key='', pattern='.', re_flags='', **kwargs):
     edited = (Q(disabled__exact=None),)
     unedited = regex_operation_on_factoid(key, pattern, re_flags,
             edited, unedit_response, sort_fields=('-created',))
-    if not unedited:
-        return render_error(request,
-                'No edited response in %s contained your pattern' % key)
     return render_quick_reply(request, "ack.irc")

@@ -31,6 +31,7 @@ def run_tests():
 
 def generate_coverage():
     num_failed = call(['python', '../coverage.py', '-x', './manage.py', 'test'], cwd='example')
+    reload(coverage)
     cov = coverage.the_coverage
     cov.use_cache(True, cache_file='./example/.coverage')
     cov.get_ready()
@@ -119,5 +120,8 @@ def autorun_tests():
     notifier.loop()
 
 if __name__ == '__main__':
+    if run_tests():
+        notify_tests_passed()
+        coverage_report(generate_coverage())
     autorun_tests()
 

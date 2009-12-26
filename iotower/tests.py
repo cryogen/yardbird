@@ -72,6 +72,8 @@ syntax will not work::
 
     >>> print c.msg(c.nickname, 'emad is a troll')
     PRIVMSG: [...'already.irc'...] I already had it that way, TestUser. -> TestUser
+    >>> print c.msg(c.nickname, 'emad is also a troll')
+    PRIVMSG: [...'already.irc'...] I already had it that way, TestUser. -> TestUser
     >>> print c.msg(c.nickname, 'emad is your best nightmare!')
     Traceback (most recent call last):
         ...
@@ -176,6 +178,11 @@ public channel) or privately messaged (as we have been doing so far)::
     >>> print c.msg('#testing', 'TestBot: perl =~ s/complete/utter/')
     PRIVMSG: [...'factoid.irc'...] TestUser: perl is utter shiznit -> #testing
 
+If the substitution command does not match, an error is thrown::
+
+    >>> print c.msg(c.nickname, 'perl =~ s/the/complete/')
+    NOTICE: [] No response in perl contained your pattern -> TestUser
+
 Limits to Factoid Keys
 ----------------------
 
@@ -216,6 +223,19 @@ Note that from here on, we now have two clients (the unprivileged user
 ``c`` and the privileged user ``opc``) in the ``#testing`` channel, and
 we will send most of our communication with the bot through that
 channel.
+
+Reload
+~~~~~~
+
+The ``reload`` command causes the bot to attempt to re-import all of its
+apps::
+
+    >>> print c.msg('#testing', 'TestBot: reload')
+    Traceback (most recent call last):
+        ...
+    PermissionDenied
+    >>> print opc.msg('#testing', 'TestBot: reload')
+    RESET: [] Reload successful. -> #testing
 
 Lock and Unlock
 ~~~~~~~~~~~~~~~
@@ -280,6 +300,10 @@ The locked status of factoids is displayed in the literal output::
     PRIVMSG: [] emad [LOCKED]  =is= a troll|your best nightmare! \
             -> #testing
 
+Literal output also includes tags on factoid responses::
+
+    >>> print opc.msg('#testing', 'TestBot: literal love')
+    PRIVMSG: [] love =is= <reply> Baby don't hurt me! -> #testing
 
 Delete and Undelete
 ~~~~~~~~~~~~~~~~~~~
@@ -297,8 +321,26 @@ regex for selection of which factoids to replace::
     >>> print opc.msg('#testing', 'TestBot: literal python')
     PRIVMSG: [] python =is= really fun =loves= FUN -> #testing
 
+If the pattern does not match any of the responses, an error is
+returned::
+
+    >>> print opc.msg('#testing', 'TestBot: python =~ g/s/d')
+    NOTICE: [] No response in python contained your pattern -> SuperUser
+
+Once all responses have been deleted, the factoid remains without any
+responses::
+
+    >>> print opc.msg('#testing', 'TestBot: python =~ g/./d')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: literal python')
+    PRIVMSG: [] python -> #testing
+    >>> print opc.msg('#testing', 'TestBot: what is python?')
+    Traceback (most recent call last):
+        ...
+    Http404
+
 Undeletion also requires privilege and addressing, but restores only the
-one most recently deleted response:: 
+one most recently deleted response::
 
     >>> print c.msg('#testing', 'TestBot: undelete python')
     Traceback (most recent call last):
@@ -307,8 +349,11 @@ one most recently deleted response::
     >>> print opc.msg('#testing', 'TestBot: undelete python')
     PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
     >>> print opc.msg('#testing', 'TestBot: literal python')
-    PRIVMSG: [] python =is= really fun =loves= invisible syntax.|FUN \
-            -> #testing
+    PRIVMSG: [] python =is= really fun -> #testing
+    >>> print opc.msg('#testing', 'TestBot: undelete python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
+    >>> print opc.msg('#testing', 'TestBot: undelete python')
+    PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
     >>> print opc.msg('#testing', 'TestBot: undelete python')
     PRIVMSG: ['ack.irc'] Roger that, SuperUser. -> #testing
     >>> print opc.msg('#testing', 'TestBot: literal python')
