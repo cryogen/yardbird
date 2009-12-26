@@ -132,10 +132,29 @@ The ``<action>`` tag also allows you to specify the response in full,
 but uses ACTION instead of PRIVMSG to deliver the reply, as though the
 bot had typed ``/me`` in an IRC client::
 
-    >>> print c.msg(c.nickname, 'whatever is <action> shrugs')
+    >>> print c.msg(c.nickname, 'shrugs is <action> shrugs back')
     PRIVMSG: ['ack.irc'] Roger that, TestUser. -> TestUser
-    >>> print c.msg(c.nickname, 'whatever')
-    ACTION: [...'factoid-action.irc'...] shrugs -> TestUser
+    >>> print c.msg(c.nickname, 'shrugs')
+    ACTION: [...'factoid-action.irc'...] shrugs back -> TestUser
+
+In addition to listening to msgs, the bot also listens to actions and
+nick changes::
+
+    >>> print c.me(c.nickname, 'shrugs')
+    ACTION: [...'factoid-action.irc'...] shrugs back -> TestUser
+    >>> print c.join('#testing')
+    None
+    >>> print c.nick('#testing', 'shrugs')
+    ACTION: [...'factoid-action.irc'...] shrugs back -> #testing
+    >>> print c.nick('#testing', 'TestUser')
+    Traceback (most recent call last):
+        ...
+    Http404: No Factoid matches the given query.
+
+Channel topics, however, are left alone for other systems to manage::
+
+    >>> print c.topic('#testing', 'shrugs')
+    QUIET: []  -> 
 
 Factoids as Templates
 ~~~~~~~~~~~~~~~~~~~~~
@@ -171,8 +190,6 @@ largely for historical reasons::
 Edits are one operation that require the bot be addressed (if in a
 public channel) or privately messaged (as we have been doing so far)::
 
-    >>> print c.join('#testing')
-    None
     >>> print c.msg('#testing', 'perl =~ s/complete/utter/')
     NOTICE: [] You must address me to perform this operation. -> TestUser
     >>> print c.msg('#testing', 'Dude: perl =~ s/complete/utter/')
@@ -413,6 +430,7 @@ customized handlers.
 We will demonstrate with the Yardbird test client's mock sender queue,
 which stores all the actions any handlers tried to perform::
 
+    >>> c.signal_sender.drain()
     >>> c.signal_sender
     []
     >>> c.msg(c.nickname, '242')
@@ -442,6 +460,18 @@ The bot's own responses do not trigger these handlers, though::
     >>> c.signal_sender
     []
 
+Fare Well
+---------
+
+    >>> c.part('#testing')
+    >>> opc.chanmodes['#testing']
+    {'superuser@localhost': 'H@'}
+    >>> opc.deop(opc.my_hostmask, '#testing')
+    >>> opc.chanmodes['#testing']
+    {'superuser@localhost': 'H'}
+    >>> opc.part('#testing')
+    >>> opc.chanmodes['#testing']
+    {}
 
 
 """
