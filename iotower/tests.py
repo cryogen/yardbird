@@ -352,7 +352,7 @@ Stats
 IOTower supports the Yardbird ``gather_statistics`` system:
 
     >>> print opc.msg('#testing', 'TestBot: stats')
-    PRIVMSG: ['stats.irc'] SuperUser: Since ... I have performed 18 edits on 9 factoids containing 12 active responses -> #testing
+    PRIVMSG: ['stats.irc'] SuperUser: Since ... I have performed ... edits on ... factoids containing ... active responses -> #testing
 
 Signal Handlers
 ---------------
