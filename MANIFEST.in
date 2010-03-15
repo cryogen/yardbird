@@ -1,2 +1,3 @@
 include LICENSE.txt
 recursive-include yardbird/templates *.irc *.html
+graft doc
