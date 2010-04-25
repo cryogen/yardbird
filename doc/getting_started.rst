@@ -68,6 +68,27 @@ installed, you can always copy the tree into your project in a pinch.
         )
 
 
+Getting Yardbird in Your PYTHONPATH 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are using the PPA or other provided packages, you're all set!
+Otherwise, you can either use the provided ``setup.py`` to install the
+``yardbird/`` package into your ``PYTHONPATH``, or copy/link the yardbird/
+tree directly into your project as an application, like so::
+
+	nerdbot/
+	|-- __init__.py
+	|-- manage.py
+	|-- settings.py
+	|-- testapp
+	|   |-- __init__.py
+	|   |-- models.py
+	|   `-- views.py
+	|-- urls.py
+	`-- yardbird
+	    |-- __init__.py
+	    ...
+
 
 Configure IRC Channels
 ----------------------
@@ -121,4 +142,15 @@ Making Your Bot Do Something
 ============================
 
 At this point if you run ``./manage.py runircbot`` it will connect to
-Slashnet_ and join the three channels you specified.  
+Slashnet_ and join the three channels you specified.  Beyond that, it will
+not be particularly interesting.  You now need to add at least one Yardbird
+application_ to your ``INSTALLED_APPS``, and hook its view functions up to
+regular expressions in appropriately-named submodules of your
+``ROOT_MSGCONF``.
+
+.. _application: http://www.b-list.org/weblog/2006/sep/10/django-tips-laying-out-application/
+
+The application that is most closely tied with Yardbird development is
+IOTower_.  
+
+.. _IOTower: http://zork.net/yardbird/iotower/

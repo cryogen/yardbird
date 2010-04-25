@@ -12,7 +12,7 @@ table, p, blockquote, h1, h2, h3, h4, h5, h6, div.footer { background-color: #ef
 th, h1, h2, h3, h4, h5, h6, a:link, a:visited, div.footer { color: #251; }
 body, pre, h1.title, a:hover, a:active {
 	background-color: #2b411b !important;
-	color: #dfa;
+	color: #efb;
 }
 pre { 
 	border-color: #c9e1aa; 
