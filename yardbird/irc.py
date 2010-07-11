@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-from django.utils.encoding import force_unicode, DjangoUnicodeDecodeError
+from django.utils.encoding import force_unicode
+from yardbird.utils.encoding import unicode_fallback
 
 class IRCRequest(object):
     def __init__(self, connection, user, channel, msg, method='privmsg',
@@ -15,19 +16,7 @@ class IRCRequest(object):
         self.channel = force_unicode(channel)
         self.privileged_channels = [force_unicode(x) for x in
                 privileged_channels]
-
-        # Attempt to decode message into unicode
-        for encoding in ['utf-8', 'iso8859-15']:
-            try:
-                self.message = force_unicode(msg, encoding)
-            except DjangoUnicodeDecodeError as e:
-                pass
-            else:
-                # force_unicode succeeded don't try any other encodings
-                break
-        if not self.message:
-            raise Exception
-
+        self.message = unicode_fallback(msg)
         self.method = method.upper()
         self.context = kwargs
         self.addressee = ''
