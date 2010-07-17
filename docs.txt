@@ -1,0 +1,5 @@
+Okay, so I want to generate /usr/share/doc/modulename/html/ from these docs.
+
+I also want to make it spit out a coherent tree that I can link together neatly.
+
+
