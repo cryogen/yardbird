@@ -6,7 +6,6 @@ from django.core import exceptions
 from yardbird.test import TestCase
 
 import yardbird.bot
-import yardbird.irc
 from yardbird.contrib import shortener
 
 
@@ -39,12 +38,13 @@ class TestCaseTestCase(TestCase):
 class DjangoBotIrcTestCase(mox.MoxTestBase):
     """Use mocks to test the IRC activity of the bot object."""
     def setUp(self):
-        """This test case's setup includes a heavily stubbed-out
-        DjangoBot object.  We manually stub out the two twisted methods
-        that were used to defer/multi-thread execution, causing flow to
-        execute sequentially.  The logging and protocol send functions
-        are mocked for our test verification, and we make a bogus
-        factory object to communicate the test bot object's settings."""
+        """ We manually stub out the two twisted methods that were used
+        to defer/multi-thread execution, causing flow to execute
+        sequentially.  The logging and protocol send functions are
+        mocked for our test verification, and we make a bogus factory
+        object to communicate the test bot object's settings. Finally we
+        mock out all possible Twisted features that would cause
+        concurrency."""
         super(DjangoBotIrcTestCase, self).setUp()
         import logging
         from twisted.internet import ssl, defer
@@ -65,6 +65,9 @@ class DjangoBotIrcTestCase(mox.MoxTestBase):
         self.bot.factory.privchans = ('#yardbird',)
         self.bot.factory.hostname = 'irc.example.com'
         self.bot.factory.port = 6667
+
+class DjangoBotConnectionTestCase(DjangoBotIrcTestCase):
+    """Test Case for initial setup/tear-down of irc connections"""
     def test_myInfo(self):
         servername = 'testsvr'
         yardbird.bot.log.info("Connected to %s" % servername)
@@ -105,9 +108,6 @@ class DjangoBotIrcTestCase(mox.MoxTestBase):
 
         for chan in self.bot.factory.channels:
             self.bot.joined(chan)
-    def test_noticed(self):
-        self.bot.noticed('whatever')
-        self.mox.ReplayAll()
     def test_connectionLost(self):
         msg = 'The end. No moral!'
         yardbird.bot.log.warn('Disconnected from %s (%s:%d): %s' %
@@ -118,6 +118,71 @@ class DjangoBotIrcTestCase(mox.MoxTestBase):
         self.bot.connectionLost(msg)
         self.assertEqual(self.bot.connected, 0,
                 'Bot did not notice loss of connection')
+
+class DjangoBotChannelModesListTestCase(DjangoBotIrcTestCase):
+    """Tests of the bot.chanmodes dict, and events that update it."""
+    def test_whoreplies(self):
+        me = self.bot.factory.nickname
+        chan = '#yardbird'
+
+        self.bot.sendLine('WHO %s' % chan)
+        self.mox.ReplayAll()
+
+        self.bot.userJoined('Spacehobo', chan)
+        self.bot.irc_RPL_WHOREPLY('foo', (me, chan, '~' + me,
+            'server.example.com', 'irc.example.com', me,
+            'H', self.bot.realname))
+        self.bot.irc_RPL_WHOREPLY('foo', (me, chan,
+            '~spacehobo', 'laptop.example.com', 'irc.example.com',
+            'SpaceHobo', 'Hr@', 'Space Hobo, esq.' ))
+        self.bot.irc_RPL_ENDOFWHO('foo', (me, chan))
+
+        yardmodes = self.bot.chanmodes['#yardbird']
+        self.assertEqual('Hr@',
+                yardmodes['~spacehobo@laptop.example.com'],
+                'SpaceHobo not listed as chanop in bot.chanmodes.')
+        self.assertEqual('H',
+                yardmodes['~testbot@server.example.com'],
+                'yardbird bot not listed as user in bot.chanmodes.')
+    def test_nick_change(self):
+        old = 'SpaceHobo!~spacehobo@laptop.example.com'
+        new = ['BindleStiff']
+        yardmodes = {'~spacehobo@laptop.example.com': 'Hr@',
+                '~testbot@server.example.com': 'H'}
+        self.bot.chanmodes['#yardbird'] = yardmodes
+
+        yardbird.bot.log.info(u'#yardbird: <%s> %s' % (old, new[0]))
+        self.bot.dispatch(mox.IsA(yardbird.irc.IRCRequest)
+                ).AndReturn(self.bogus_deferred)
+        self.bogus_deferred.addErrback(yardbird.bot.report_error,
+                self.bot, mox.IsA(yardbird.irc.IRCRequest)
+                ).AndReturn(self.bogus_deferred)
+        self.bogus_deferred.addErrback(yardbird.bot.unrecoverable_error,
+                self.bot, mox.IsA(yardbird.irc.IRCRequest)
+                ).AndReturn(self.bogus_deferred)
+        self.mox.ReplayAll()
+
+        self.bot.irc_NICK(old, new)
+    def test_quit(self):
+        yardmodes = {'~spacehobo@laptop.example.com': 'Hr@',
+                '~testbot@server.example.com': 'H'}
+        self.bot.chanmodes['#yardbird'] = yardmodes
+        self.mox.ReplayAll()
+
+        self.assertTrue('~spacehobo@laptop.example.com' in
+                self.bot.chanmodes['#yardbird'])
+        self.bot.irc_QUIT('SpaceHobo!~spacehobo@laptop.example.com',
+                'Goodbye.')
+        self.assertFalse('~spacehobo@laptop.example.com' in
+                self.bot.chanmodes['#yardbird'])
+
+class DjangoBotDispatcherTestCase(DjangoBotIrcTestCase):
+    """Test Case for events that dispatch Django views, and the
+    associated error handlers."""
+    def test_noticed(self):
+        """The bot should never react to NOTICE events"""
+        self.mox.ReplayAll()
+        self.bot.noticed('whatever')
     def test_defer(self):
         nick = 'SpaceHobo'
         chan = '#yardbird'
@@ -191,6 +256,47 @@ class DjangoBotIrcTestCase(mox.MoxTestBase):
         yardbird.bot.unrecoverable_error(self.bogus_failure, self.bot,
                 yardbird.irc.IRCRequest(self.bot, nick, chan, msg,
                 'privmsg'))
+    def test_topicUpdated(self):
+        nick = 'SpaceHobo'
+        chan = '#yardbird'
+        msg = 'My name is a kissing word'
+
+        yardbird.bot.log.info(u'%s: <%s> %s' % (chan, nick, msg))
+        self.bot.dispatch(mox.IsA(yardbird.irc.IRCRequest)
+                ).AndReturn(self.bogus_deferred)
+        self.bogus_deferred.addErrback(yardbird.bot.report_error,
+                self.bot, mox.IsA(yardbird.irc.IRCRequest)
+                ).AndReturn(self.bogus_deferred)
+        self.bogus_deferred.addErrback(yardbird.bot.unrecoverable_error,
+                self.bot, mox.IsA(yardbird.irc.IRCRequest)
+                ).AndReturn(self.bogus_deferred)
+        self.mox.ReplayAll()
+
+        d = self.bot.topicUpdated(nick, chan, msg)
+
+
+class DjangoBotMiscellaneousHacksTestCase(DjangoBotIrcTestCase):
+    def test_me(self):
+        """We provide our own /me function to work around encoding
+        problems in the core twisted version."""
+        self.bot.sendLine('PRIVMSG #yardbird :\001ACTION \\o/\001')
+        self.mox.ReplayAll()
+        self.bot.me('#yardbird', '\\o/')
+
+class DjangoBotReloadTestCase(DjangoBotIrcTestCase):
+    """Reload is destructive enough that it un-mocks everything we've
+    painstakingly faked out.  So it gets its own TestCase."""
+    def test_reload(self):
+        chan = '#yardbird'
+        msg = 'Reload successful'
+        notice = 'NOTICE %s :%s' % (chan, msg)
+
+        self.bot.sendLine(notice)
+        # XXX: need to verify that our mocks are replaced with the real thing
+
+        self.mox.ReplayAll()
+
+        self.bot.reimport(chan, msg)
 
 
 
