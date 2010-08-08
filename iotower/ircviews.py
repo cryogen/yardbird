@@ -13,25 +13,6 @@ from yardbird.shortcuts import render_to_response, render_to_reply
 from yardbird.shortcuts import render_silence, render_error, render_quick_reply
 from yardbird.utils.decorators import require_addressing, require_chanop
 
-def normalize_factoid_key(key):
-    key = key.lower()
-    key = re.sub(r'(?u)[^\w\s]+', '', key)
-    key = re.sub(r'(?u)\s+', ' ', key)
-    if 1 <= len(key) <= 64:
-        return key
-    raise(OverflowError, "Normalized key '%s' not fit for database" % key)
-
-def generate_statistics():
-    fr = FactoidResponse.objects
-    oldest_response = fr.all()[0]
-    earliest_date = oldest_response.created.replace(microsecond=0)
-    num_factoids = Factoid.objects.count()
-    num_edits = fr.count()
-    num_active_responses = fr.filter(disabled__exact=None).count()
-    return ('Since %s I have performed %d edits on %d factoids ' +
-            'containing %d active responses',
-            (earliest_date, num_edits, num_factoids, num_active_responses))
-
 @require_addressing
 @require_chanop
 def reimport(request, *args, **kwargs):
@@ -119,6 +100,7 @@ def trigger(request, key='', verb='', **kwargs):
 def literal(request, key='', **kwargs):
     factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
     responses = factoid.factoidresponse_set.filter(disabled__exact=None)
+    # XXX: This *really* needs to become a template.
     text = key
     verb = ''
     if factoid.protected:
@@ -135,56 +117,17 @@ def literal(request, key='', **kwargs):
 
     return IRCResponse(request.reply_recipient, text)
 
-def get_factoid_and_pattern(key, pattern, re_flags):
-    flags = re.UNICODE
-    count = 1
-    if 'i' in re_flags:
-        flags |= re.IGNORECASE
-    if 'g' in re_flags:
-        count = 0
-    pat = re.compile(pattern, flags)
-    factoid = get_object_or_404(Factoid, fact__iexact=normalize_factoid_key(key))
-    return factoid, pat, count
-
-def regex_operation_on_factoid(key, pattern, re_flags, queries, fn,
-        multiple=False, sort_fields=None):
-    factoid, pat, count = get_factoid_and_pattern(key, pattern, re_flags)
-    responses = factoid.factoidresponse_set.filter(*queries)
-    if sort_fields:
-        responses = responses.order_by(*sort_fields)
-    ret = []
-    for response in responses:
-        if pat.search(response.text):
-            answer = fn(response, pattern=pat, factoid=factoid,
-                    responses=responses)
-            if answer and multiple:
-                ret.append(answer)
-            elif answer:
-                return answer
-    return ret
-
-def replace_response(old_response, new_text, created_by):
-    edited = FactoidResponse(fact=old_response.fact,
-            verb=old_response.verb, tag=old_response.tag, text=new_text,
-            created_by=created_by)
-    edited.save() # To generate creation time.
-    old_response.disabled = edited.created
-    old_response.disabled_by = edited.created_by
-    old_response.save()
-    return edited
-
 @require_addressing
 def edit(request, key='', pattern='', replacement='', re_flags='',
          **kwargs):
-    factoid, pat, count = get_factoid_and_pattern(key, pattern, re_flags)
-    responses = factoid.factoidresponse_set.filter(disabled__exact=None)
-    for response in responses:
-        if pat.search(response.text):
-            newtext = pat.sub(replacement, response.text, count)
-            edited = replace_response(response, newtext, request.nick)
-            return render_to_reply(request, 'factoid.irc',
-                                   {'factoid': key, 'verb': edited.verb,
-                                    'text': edited.text})
+    factoid = get_object_or_404(Factoid,
+            fact__iexact=normalize_factoid_key(key))
+    edited = factoid.edit_responses(pattern, re_flags, replacement,
+            request.nick)
+    if edited:
+        return render_to_reply(request, 'factoid.irc',
+                {'factoid': key, 'verb': edited.verb,
+                    'text': edited.text})
     return render_error(request,
                         'No response in %s contained your pattern' % key)
 
@@ -192,16 +135,9 @@ def edit(request, key='', pattern='', replacement='', re_flags='',
 @require_addressing
 @require_chanop
 def delete(request, key='', pattern='.', re_flags='', **kwargs):
-    def delete_response(response, **kwargs):
-        response.disabled = datetime.now()
-        response.disabled_by = request.nick
-        response.save()
-        return response.text
-
-    not_deleted = (Q(disabled__exact=None),)
-    deleted = regex_operation_on_factoid(key, pattern, re_flags,
-            not_deleted, delete_response, multiple=True,
-            sort_fields=('-created',))
+    factoid = get_object_or_404(Factoid,
+            fact__iexact=normalize_factoid_key(key))
+    deleted = factoid.delete_response(pattern, re_flags, request.nick)
     if not deleted:
         return render_error(
                 request, 'No response in %s contained your pattern' % key)
@@ -210,15 +146,9 @@ def delete(request, key='', pattern='.', re_flags='', **kwargs):
 @require_addressing
 @require_chanop
 def undelete(request, key='', pattern='.', re_flags='', **kwargs):
-    def undelete_response(response, **kwargs):
-        response.disabled = None
-        response.disabled_by = None
-        response.save()
-        return response.text
-
-    deleted = (Q(disabled__isnull=False),)
-    undeleted = regex_operation_on_factoid(key, pattern, re_flags,
-            deleted, undelete_response, sort_fields=('-disabled',))
+    factoid = get_object_or_404(Factoid,
+            fact__iexact=normalize_factoid_key(key))
+    undeleted = factoid.undelete_response(pattern, re_flags, request.nick)
     if not undeleted:
         return render_error(request,
                 'No deleted response found for %s' % key)
@@ -227,14 +157,7 @@ def undelete(request, key='', pattern='.', re_flags='', **kwargs):
 @require_addressing
 @require_chanop
 def unedit(request, key='', pattern='.', re_flags='', **kwargs):
-    def unedit_response(response, factoid=None, **kwargs):
-        oldresponse = factoid.factoidresponse_set.get(
-                disabled__exact=response.created)
-        edited = replace_response(response, oldresponse.text,
-                request.nick)
-        return edited.text
-
-    edited = (Q(disabled__exact=None),)
-    unedited = regex_operation_on_factoid(key, pattern, re_flags,
-            edited, unedit_response, sort_fields=('-created',))
+    factoid = get_object_or_404(Factoid,
+            fact__iexact=normalize_factoid_key(key))
+    factoid.unedit_response(pattern, re_flags, request.nick)
     return render_quick_reply(request, "ack.irc")
