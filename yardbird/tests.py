@@ -305,7 +305,7 @@ class DjangoBotReloadTestCase(DjangoBotIrcTestCase):
 
         self.bot.reimport(chan, msg)
 
-class DjangoBotAutoDecodeTestCase(DjangoBotIrcTestCase):
+class DjangoBotAutoDecodeTestCase(TestCase):
     """Test a boatload of various conversions to and from different
     encodings"""
     def setUp(self):
@@ -339,10 +339,10 @@ class DjangoBotAutoDecodeTestCase(DjangoBotIrcTestCase):
         self.assertEqual(
                 encoding.unicode_fallback("\xf2", encodings=['koi8_r']),
                 "\xd0\xa0".decode('utf-8'))
-        
+
     def test_empty_settings(self):
         # If settings.IRC_INPUT_ENCODINGS is empty, things are expected to break
-        temp = settings.IRC_INPUT_ENCODINGS
+        temp = self.client.IRC_INPUT_ENCODINGS
         settings.IRC_INPUT_ENCODINGS = []
         self.assertRaises(ValueError, encoding.unicode_fallback, "abc")
 
