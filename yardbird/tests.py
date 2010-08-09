@@ -8,6 +8,10 @@ from yardbird.test import TestCase
 import yardbird.bot
 from yardbird.contrib import shortener
 
+from yardbird.utils import encoding
+from django.utils.encoding import DjangoUnicodeDecodeError
+from django.conf import settings
+
 
 class ShortenerTestCase(TestCase):
     def test_encoder(self):
@@ -298,5 +302,41 @@ class DjangoBotReloadTestCase(DjangoBotIrcTestCase):
 
         self.bot.reimport(chan, msg)
 
+class DjangoBotAutoDecodeTestCase(DjangoBotIrcTestCase):
+    """Test a boatload of various conversions to and from different
+    encodings"""
+    def test_unicode_fallback(self):
+        # Set encodings to make sure we know what's going on
+        std_enc = ['utf_8', 'cp1252']
+
+        self.assertEqual(encoding.unicode_fallback(
+            "abc", encodings=std_enc), u'abc')
+        self.assertEqual(encoding.unicode_fallback(
+            "\xC6", encodings=std_enc), unicode("\xc3\x86".decode('utf-8')))
+        self.assertRaises(DjangoUnicodeDecodeError,
+                encoding.unicode_fallback, "\x9D", encodings=std_enc)
+
+        # CP1252 and ISO8859-15 differ slightly
+        self.assertNotEqual(
+                encoding.unicode_fallback("\xA4", encodings=std_enc),
+                encoding.unicode_fallback("\xA4", encodings=['iso8859-15']))
+
+        # CP1252 and ISO8859-1 on the other hand are identical here
+        self.assertEqual(
+                encoding.unicode_fallback("\xA4", encodings=std_enc),
+                encoding.unicode_fallback("\xA4", encodings=['iso8859-1']))
+
+        # Now let's try some ruskii
+        self.assertEqual(
+                encoding.unicode_fallback("\xf2", encodings=['koi8_r']),
+                "\xd0\xa0".decode('utf-8'))
+        
+        # If settings.IRC_INPUT_ENCODINGS is empty, things are expected to break
+        temp = settings.IRC_INPUT_ENCODINGS
+        settings.IRC_INPUT_ENCODINGS = []
+        self.assertRaises(ValueError, encoding.unicode_fallback, "abc")
+
+        # Set things back
+        settings.IRC_INPUT_ENCODINGS = temp
 
 
