@@ -10,7 +10,6 @@ from yardbird.contrib import shortener
 
 from yardbird.utils import encoding
 from django.utils.encoding import DjangoUnicodeDecodeError
-from django.conf import settings
 
 
 class ShortenerTestCase(TestCase):
@@ -343,10 +342,10 @@ class DjangoBotAutoDecodeTestCase(TestCase):
     def test_empty_settings(self):
         # If settings.IRC_INPUT_ENCODINGS is empty, things are expected to break
         temp = self.client.IRC_INPUT_ENCODINGS
-        settings.IRC_INPUT_ENCODINGS = []
+        django.conf.settings.IRC_INPUT_ENCODINGS = []
         self.assertRaises(ValueError, encoding.unicode_fallback, "abc")
 
         # Set things back
-        settings.IRC_INPUT_ENCODINGS = temp
+        django.conf.settings.IRC_INPUT_ENCODINGS = temp
 
 
