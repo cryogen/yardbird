@@ -307,27 +307,28 @@ class DjangoBotAutoDecodeTestCase(DjangoBotIrcTestCase):
     encodings"""
     def setUp(self):
         # Set encodings to make sure we know what's going on
-        std_enc = ['utf_8', 'cp1252']
+        self.std_enc = ['utf_8', 'cp1252']
 
     def test_ascii_unchanged(self):
         self.assertEqual(encoding.unicode_fallback(
-            "abc", encodings=std_enc), u'abc')
-    def test_conversion(self)
+            "abc", encodings=self.std_enc), u'abc')
+
+    def test_conversion(self):
         self.assertEqual(encoding.unicode_fallback(
-            "\xC6", encodings=std_enc), "\xc3\x86".decode('utf-8'))
+            "\xC6", encodings=self.std_enc), "\xc3\x86".decode('utf-8'))
         self.assertRaises(DjangoUnicodeDecodeError,
-                encoding.unicode_fallback, "\x9D", encodings=std_enc)
+                encoding.unicode_fallback, "\x9D", encodings=self.std_enc)
 
     def test_cp1252_latin9_differ(self):
         # CP1252 and ISO8859-15 differ slightly
         self.assertNotEqual(
-                encoding.unicode_fallback("\xA4", encodings=std_enc),
+                encoding.unicode_fallback("\xA4", encodings=self.std_enc),
                 encoding.unicode_fallback("\xA4", encodings=['iso8859-15']))
 
     def test_cp1252_latin9_equal(self):
         # CP1252 and ISO8859-1 on the other hand are identical here
         self.assertEqual(
-                encoding.unicode_fallback("\xA4", encodings=std_enc),
+                encoding.unicode_fallback("\xA4", encodings=self.std_enc),
                 encoding.unicode_fallback("\xA4", encodings=['iso8859-1']))
 
     def test_ruscii(self):
