@@ -312,7 +312,7 @@ class DjangoBotAutoDecodeTestCase(DjangoBotIrcTestCase):
         self.assertEqual(encoding.unicode_fallback(
             "abc", encodings=std_enc), u'abc')
         self.assertEqual(encoding.unicode_fallback(
-            "\xC6", encodings=std_enc), unicode("\xc3\x86".decode('utf-8')))
+            "\xC6", encodings=std_enc), "\xc3\x86".decode('utf-8'))
         self.assertRaises(DjangoUnicodeDecodeError,
                 encoding.unicode_fallback, "\x9D", encodings=std_enc)
 
@@ -326,7 +326,7 @@ class DjangoBotAutoDecodeTestCase(DjangoBotIrcTestCase):
                 encoding.unicode_fallback("\xA4", encodings=std_enc),
                 encoding.unicode_fallback("\xA4", encodings=['iso8859-1']))
 
-        # Now let's try some ruskii
+        # Now let's try some ruscii
         self.assertEqual(
                 encoding.unicode_fallback("\xf2", encodings=['koi8_r']),
                 "\xd0\xa0".decode('utf-8'))
