@@ -78,6 +78,14 @@ class Client(object):
             self.ROOT_MSGCONF = self.defaults['ROOT_MSGCONF']
         else:
             self.ROOT_MSGCONF = settings.ROOT_MSGCONF
+        if 'IRC_INPUT_ENCODINGS' in self.defaults:
+            self.IRC_INPUT_ENCODINGS = \
+                    self.defaults['IRC_INPUT_ENCODINGS'] # pragma: nocover
+        else:
+            try:
+                self.IRC_INPUT_ENCODINGS = settings.IRC_INPUT_ENCODINGS
+            except AttributeError:
+                self.IRC_INPUT_ENCODINGS = ['utf-8', 'cp1252']
 
     def join(self, channel):
         if channel.lower() not in self.chanmodes:
