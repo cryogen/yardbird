@@ -340,10 +340,13 @@ class DjangoBotAutoDecodeTestCase(TestCase):
                 "\xd0\xa0".decode('utf-8'))
 
     def test_empty_settings(self):
-        # If settings.IRC_INPUT_ENCODINGS is empty, things are expected to break
+        # If settings.IRC_INPUT_ENCODINGS is empty, things are expected to work
+        # as with ['utf-8', 'cp1252']
         temp = self.client.IRC_INPUT_ENCODINGS
         self.client.IRC_INPUT_ENCODINGS = []
-        self.assertRaises(ValueError, encoding.unicode_fallback, "abc")
+        self.assertEqual(
+                encoding.unicode_fallback("\x83", encodings=self.std_enc),
+                "\xc6\x92".decode('utf-8'))
 
         # Set things back
         self.client.IRC_INPUT_ENCODINGS = temp

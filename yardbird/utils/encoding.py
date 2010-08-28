@@ -12,10 +12,6 @@ def unicode_fallback(msg, encodings=None):
         encodings = getattr(settings, 'IRC_INPUT_ENCODINGS',
                 ['utf_8', 'cp1252'])
             
-    if not encodings:
-        raise ValueError("settings.IRC_INPUT_ENCODINGS must not be an empty" +
-                "list")
-
     for encoding in encodings:
         try:
             return force_unicode(msg, encoding)
