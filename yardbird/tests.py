@@ -54,12 +54,9 @@ class DjangoBotIrcTestCase(mox.MoxTestBase):
         concurrency."""
         super(DjangoBotIrcTestCase, self).setUp()
         import logging
-        import django.conf
         from twisted.internet import ssl, defer
         from twisted.python import failure
         yardbird.bot.log = self.mox.CreateMock(logging._loggerClass)
-        yardbird.utils.encoding.settings = self.mox.CreateMock(django.conf.settings)
-        yardbird.utils.encoding.settings.IRC_INPUT_ENCODINGS = ['utf_8', 'cp1252']
         self.bogus_deferred = self.mox.CreateMock(defer.Deferred)
         self.bogus_failure = self.mox.CreateMock(failure.Failure)
 
