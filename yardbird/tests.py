@@ -2,6 +2,7 @@ import mox
 
 from django.http import Http404
 from django.core import exceptions
+from django.conf import settings
 
 from yardbird.test import TestCase
 
@@ -11,6 +12,9 @@ from yardbird.contrib import shortener
 from yardbird.utils import encoding
 from django.utils.encoding import DjangoUnicodeDecodeError
 
+
+# Override settings that might cause trouble if set to something unexpected
+settings.IRC_INPUT_ENCODINGS = ['utf-8', 'cp1252'] 
 
 class ShortenerTestCase(TestCase):
     def test_encoder(self):
@@ -340,15 +344,12 @@ class DjangoBotAutoDecodeTestCase(TestCase):
                 "\xd0\xa0".decode('utf-8'))
 
     def test_empty_settings(self):
-        # If settings.IRC_INPUT_ENCODINGS is empty, things are expected to work
-        # as with ['utf-8', 'cp1252']
-        temp = self.client.IRC_INPUT_ENCODINGS
-        self.client.IRC_INPUT_ENCODINGS = []
-        self.assertEqual(
-                encoding.unicode_fallback("\x83", encodings=self.std_enc),
-                "\xc6\x92".decode('utf-8'))
+        # If settings.IRC_INPUT_ENCODINGS is empty, we expect an exception
+        temp = settings.IRC_INPUT_ENCODINGS
+        settings.IRC_INPUT_ENCODINGS = []
+        self.assertRaises(ValueError, encoding.unicode_fallback, "\x83")
 
         # Set things back
-        self.client.IRC_INPUT_ENCODINGS = temp
+        settings.IRC_INPUT_ENCODINGS = temp
 
 
