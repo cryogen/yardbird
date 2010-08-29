@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.utils.encoding import force_unicode, DjangoUnicodeDecodeError
 
-def unicode_fallback(msg, encodings=None):
+def force_unicode(msg, encodings=None):
     """Attempt to decode message into unicode, using the given encodings.
     Defaults to the value of settings.IRC_INPUT_ENCODINGS. or utf-8, then
     CP1252 if settings.IRC_INPUT_ENCODINGS. is not set."""

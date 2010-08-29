@@ -313,38 +313,38 @@ class DjangoBotAutoDecodeTestCase(TestCase):
         self.std_enc = ['utf_8', 'cp1252']
 
     def test_ascii_unchanged(self):
-        self.assertEqual(encoding.unicode_fallback(
+        self.assertEqual(encoding.force_unicode(
             "abc", encodings=self.std_enc), u'abc')
 
     def test_conversion(self):
-        self.assertEqual(encoding.unicode_fallback(
+        self.assertEqual(encoding.force_unicode(
             "\xC6", encodings=self.std_enc), "\xc3\x86".decode('utf-8'))
         self.assertRaises(DjangoUnicodeDecodeError,
-                encoding.unicode_fallback, "\x9D", encodings=self.std_enc)
+                encoding.force_unicode, "\x9D", encodings=self.std_enc)
 
     def test_cp1252_latin9_differ(self):
         # CP1252 and ISO8859-15 differ slightly
         self.assertNotEqual(
-                encoding.unicode_fallback("\xA4", encodings=self.std_enc),
-                encoding.unicode_fallback("\xA4", encodings=['iso8859-15']))
+                encoding.force_unicode("\xA4", encodings=self.std_enc),
+                encoding.force_unicode("\xA4", encodings=['iso8859-15']))
 
     def test_cp1252_latin9_equal(self):
         # CP1252 and ISO8859-1 on the other hand are identical here
         self.assertEqual(
-                encoding.unicode_fallback("\xA4", encodings=self.std_enc),
-                encoding.unicode_fallback("\xA4", encodings=['iso8859-1']))
+                encoding.force_unicode("\xA4", encodings=self.std_enc),
+                encoding.force_unicode("\xA4", encodings=['iso8859-1']))
 
     def test_ruscii(self):
         # Now let's try some ruscii
         self.assertEqual(
-                encoding.unicode_fallback("\xf2", encodings=['koi8_r']),
+                encoding.force_unicode("\xf2", encodings=['koi8_r']),
                 "\xd0\xa0".decode('utf-8'))
 
     def test_empty_settings(self):
         # If settings.IRC_INPUT_ENCODINGS is empty, we expect an exception
         temp = settings.IRC_INPUT_ENCODINGS
         settings.IRC_INPUT_ENCODINGS = []
-        self.assertRaises(ValueError, encoding.unicode_fallback, "\x83")
+        self.assertRaises(ValueError, encoding.force_unicode, "\x83")
 
         # Set things back
         settings.IRC_INPUT_ENCODINGS = temp
@@ -353,6 +353,6 @@ class DjangoBotAutoDecodeTestCase(TestCase):
         # Passing a unicode object should return it unchanged
         snowman = "\xe2\x98\x83".decode('utf-8')
         self.assertEqual(
-                encoding.unicode_fallback(snowman, encodings=['ascii']),
+                encoding.force_unicode(snowman, encodings=['ascii']),
                 snowman)
 
