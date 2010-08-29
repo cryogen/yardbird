@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from django.conf import settings
-from django.utils.encoding import force_unicode, DjangoUnicodeDecodeError
+from django.utils.encoding import force_unicode as django_force_unicode
+from django.utils.encoding import DjangoUnicodeDecodeError
 
 def force_unicode(msg, encodings=None):
     """Attempt to decode message into unicode, using the given encodings.
@@ -17,7 +18,7 @@ def force_unicode(msg, encodings=None):
 
     for encoding in encodings:
         try:
-            return force_unicode(msg, encoding)
+            return django_force_unicode(msg, encoding)
         except DjangoUnicodeDecodeError as e:
             last_exception = e
     # If we haven't returned, raise the last exception (giving up)
