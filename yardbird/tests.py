@@ -349,4 +349,10 @@ class DjangoBotAutoDecodeTestCase(TestCase):
         # Set things back
         settings.IRC_INPUT_ENCODINGS = temp
 
+    def test_unicode_object(self):
+        # Passing a unicode object should return it unchanged
+        snowman = "\xe2\x98\x83".decode('utf-8')
+        self.assertEqual(
+                encoding.unicode_fallback(snowman, encodings=['ascii']),
+                snowman)
 
