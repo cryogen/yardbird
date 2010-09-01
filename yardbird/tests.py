@@ -2,12 +2,19 @@ import mox
 
 from django.http import Http404
 from django.core import exceptions
+from django.conf import settings
 
 from yardbird.test import TestCase
 
 import yardbird.bot
 from yardbird.contrib import shortener
 
+from yardbird.utils import encoding
+from django.utils.encoding import DjangoUnicodeDecodeError
+
+
+# Override settings that might cause trouble if set to something unexpected
+settings.IRC_INPUT_ENCODINGS = ['utf-8', 'cp1252'] 
 
 class ShortenerTestCase(TestCase):
     def test_encoder(self):
@@ -298,5 +305,54 @@ class DjangoBotReloadTestCase(DjangoBotIrcTestCase):
 
         self.bot.reimport(chan, msg)
 
+class DjangoBotAutoDecodeTestCase(TestCase):
+    """Test a boatload of various conversions to and from different
+    encodings"""
+    def setUp(self):
+        # Set encodings to make sure we know what's going on
+        self.std_enc = ['utf_8', 'cp1252']
 
+    def test_ascii_unchanged(self):
+        self.assertEqual(encoding.force_unicode(
+            "abc", encodings=self.std_enc), u'abc')
+
+    def test_conversion(self):
+        self.assertEqual(encoding.force_unicode(
+            "\xC6", encodings=self.std_enc), "\xc3\x86".decode('utf-8'))
+        self.assertRaises(DjangoUnicodeDecodeError,
+                encoding.force_unicode, "\x9D", encodings=self.std_enc)
+
+    def test_cp1252_latin9_differ(self):
+        # CP1252 and ISO8859-15 differ slightly
+        self.assertNotEqual(
+                encoding.force_unicode("\xA4", encodings=self.std_enc),
+                encoding.force_unicode("\xA4", encodings=['iso8859-15']))
+
+    def test_cp1252_latin9_equal(self):
+        # CP1252 and ISO8859-1 on the other hand are identical here
+        self.assertEqual(
+                encoding.force_unicode("\xA4", encodings=self.std_enc),
+                encoding.force_unicode("\xA4", encodings=['iso8859-1']))
+
+    def test_ruscii(self):
+        # Now let's try some ruscii
+        self.assertEqual(
+                encoding.force_unicode("\xf2", encodings=['koi8_r']),
+                "\xd0\xa0".decode('utf-8'))
+
+    def test_empty_settings(self):
+        # If settings.IRC_INPUT_ENCODINGS is empty, we expect an exception
+        temp = settings.IRC_INPUT_ENCODINGS
+        settings.IRC_INPUT_ENCODINGS = []
+        self.assertRaises(ValueError, encoding.force_unicode, "\x83")
+
+        # Set things back
+        settings.IRC_INPUT_ENCODINGS = temp
+
+    def test_unicode_object(self):
+        # Passing a unicode object should return it unchanged
+        snowman = "\xe2\x98\x83".decode('utf-8')
+        self.assertEqual(
+                encoding.force_unicode(snowman, encodings=['ascii']),
+                snowman)
 

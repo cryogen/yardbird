@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from django.utils.encoding import force_unicode
+from yardbird.utils.encoding import force_unicode
 
 class IRCRequest(object):
     def __init__(self, connection, user, channel, msg, method='privmsg',
@@ -13,8 +13,8 @@ class IRCRequest(object):
         else: # pragma: nocover
             self.nick, self.mask = user, None
         self.channel = force_unicode(channel)
-        self.privileged_channels = [force_unicode(x) for x in
-                privileged_channels]
+        self.privileged_channels = [force_unicode(x, encodings=['utf-8'])
+                for x in privileged_channels]
         self.message = force_unicode(msg)
         self.method = method.upper()
         self.context = kwargs
