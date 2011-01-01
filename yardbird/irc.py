@@ -42,6 +42,8 @@ class IRCResponse(object):
         self.data = force_unicode(data)
         self.method = method
         self.context = kwargs
+        if 'responses' in kwargs:
+            self.responses = kwargs['responses']
     def __unicode__(self): # pragma: nocover
         return u'%s: <%s> %s' % (self.method, self.recipient, self.data)
     def __str__(self): # pragma: nocover

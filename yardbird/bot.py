@@ -59,6 +59,7 @@ class DjangoBot(IRCClient):
                         'NOTICE':   self.notice,
                         'TOPIC':    self.topic,
                         'RESET':    self.reimport,
+                        'MULTIPLE': self.multiple,
                        }
         self.chanmodes = {}
         self.whoreplies = {}
@@ -150,6 +151,8 @@ class DjangoBot(IRCClient):
             opts = {'length':
                     510 - len(':! PRIVMSG  :' + self.nickname +
                       response.recipient.encode('utf-8') + self.hostmask)}
+        elif response.method == 'MULTIPLE': # pragma: nocover
+            opts = {'responses': response.responses }
         else: # pragma: nocover
             opts = {}
         log.info(unicode(response)) # pragma: nocover
@@ -191,6 +194,27 @@ class DjangoBot(IRCClient):
                 if mask in self.chanmodes[channel]:
                     return self.dispatchable_event(user, channel,
                                                    new_nick, 'nick')
+
+    def multiple(self, recipient, data, responses, **kwargs):
+        """The MULTIPLE response type contains a list of response
+        objects in the data parameter, but ultimately discards the
+        recipient or any kwargs."""
+        for response in responses:
+            if response.method == 'QUIET': # pragma: nocover
+                log.debug(response)
+                continue
+            elif response.method == 'PRIVMSG': # pragma: nocover
+                opts = {'length':
+                        510 - len(':! PRIVMSG  :' + self.nickname +
+                          response.recipient.encode('utf-8') + self.hostmask)}
+            elif response.method == 'MULTIPLE': # pragma: nocover
+                # If you're doing this, it's your own damn fault.
+                opts = {'responses': response.responses }
+            else: # pragma: nocover
+                opts = {}
+            self.methods[response.method](
+                response.recipient.encode('utf-8'),
+                response.data.encode('utf-8'), **opts) # pragma: nocover
 
     ############### Special methods ###############
     def reimport(self, recipient, data, **kwargs):

@@ -7,6 +7,7 @@ from django.conf import settings
 from yardbird.test import TestCase
 
 import yardbird.bot
+from yardbird.irc import IRCResponse
 from yardbird.contrib import shortener
 
 from yardbird.utils import encoding
@@ -14,7 +15,7 @@ from django.utils.encoding import DjangoUnicodeDecodeError
 
 
 # Override settings that might cause trouble if set to something unexpected
-settings.IRC_INPUT_ENCODINGS = ['utf-8', 'cp1252'] 
+settings.IRC_INPUT_ENCODINGS = ['utf-8', 'cp1252']
 
 class ShortenerTestCase(TestCase):
     def test_encoder(self):
@@ -280,6 +281,25 @@ class DjangoBotDispatcherTestCase(DjangoBotIrcTestCase):
         self.mox.ReplayAll()
 
         d = self.bot.topicUpdated(nick, chan, msg)
+
+
+class DjangoBotMultiResponseObjsTestCase(DjangoBotIrcTestCase):
+    """Test the MULTIPLE response type"""
+    def test_multiple_response(self):
+        responses = []
+        responses.append(IRCResponse('emad', 'whoa nelly!'))
+        responses.append(IRCResponse('#wut', 'APPLY TOPICALLY',
+            method='TOPIC'))
+        response = IRCResponse('', '', responses=responses,
+                method='MULTIPLE')
+
+        self.bot.sendLine('PRIVMSG emad :whoa nelly!')
+        self.bot.sendLine('TOPIC #wut :APPLY TOPICALLY')
+        self.mox.ReplayAll()
+        self.bot.methods[response.method](
+                response.recipient.encode('utf-8'),
+                response.data.encode('utf-8'),
+                responses=response.responses)
 
 
 class DjangoBotMiscellaneousHacksTestCase(DjangoBotIrcTestCase):
