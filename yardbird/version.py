@@ -1,7 +1,7 @@
 VERSION = 'Anthropology'
 TARGET = '0.9'
 
-def sdist_ver():
+def sdist_ver(): #pragma: nocover
     import re
     if VERSION == TARGET:
         return VERSION

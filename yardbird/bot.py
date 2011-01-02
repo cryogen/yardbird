@@ -59,6 +59,7 @@ class DjangoBot(IRCClient):
                         'NOTICE':   self.notice,
                         'TOPIC':    self.topic,
                         'RESET':    self.reimport,
+                        'MULTIPLE': self.multiple,
                        }
         self.chanmodes = {}
         self.whoreplies = {}
@@ -117,12 +118,16 @@ class DjangoBot(IRCClient):
         self.sendLine('PING %s' % self.servername)
 
     ############### Event dispatch methods ###############
-    @defer.inlineCallbacks
-    def dispatch(self, req):
+    # Unfortunately, twisted is too difficult to reasonably stub out,
+    # and coverage.py isn't that smart about nested definitions or
+    # decorators or both, so I have to add the nocover pragma to each
+    # line in this method.
+    @defer.inlineCallbacks # pragma: nocover
+    def dispatch(self, req): # pragma: nocover
         """This method invokes a django url resolver to detect
         interesting messages and dispatch them to callback functions
         based on regular expression matches."""
-        def asynchronous_work(request, args, kwargs):
+        def asynchronous_work(request, args, kwargs): # pragma: nocover
             """This function runs in a separate thread, as the signal
             handlers and callback functions may take forever and a day
             to execute."""
@@ -134,24 +139,27 @@ class DjangoBot(IRCClient):
             return response
 
         resolver = urlresolvers.get_resolver('.'.join(
-            (settings.ROOT_MSGCONF, req.method.lower())))
-        callback, args, kwargs = yield resolver.resolve('/' + req.message)
+            (settings.ROOT_MSGCONF, req.method.lower()))) # pragma: nocover
+        callback, args, kwargs = yield resolver.resolve('/' +
+                req.message) # pragma: nocover
         response = yield threads.deferToThread(asynchronous_work, req,
-                                               args, kwargs)
-        if response.method == 'QUIET':
+                args, kwargs) # pragma: nocover
+        if response.method == 'QUIET': # pragma: nocover
             log.debug(response)
             defer.returnValue(True)
-        elif response.method == 'PRIVMSG':
+        elif response.method == 'PRIVMSG': # pragma: nocover
             opts = {'length':
                     510 - len(':! PRIVMSG  :' + self.nickname +
                       response.recipient.encode('utf-8') + self.hostmask)}
-        else:
+        elif response.method == 'MULTIPLE': # pragma: nocover
+            opts = {'responses': response.responses }
+        else: # pragma: nocover
             opts = {}
-        log.info(unicode(response))
+        log.info(unicode(response)) # pragma: nocover
         defer.returnValue(
-            self.methods[response.method](response.recipient.encode('utf-8'),
-                                          response.data.encode('utf-8'),
-                                          **opts))
+            self.methods[response.method](
+                response.recipient.encode('utf-8'),
+                response.data.encode('utf-8'), **opts)) # pragma: nocover
     def dispatchable_event(self, user, channel, msg, method):
         """All events that can be handled by Django code construct an
         IRCRequest representation and pass that on to the dispatch()
@@ -160,7 +168,7 @@ class DjangoBot(IRCClient):
             req = IRCRequest(self, user, channel, msg, method,
                     privileged_channels=self.factory.privchans)
             log.info(unicode(req))
-            self.dispatch(req
+            return self.dispatch(req
                     ).addErrback(report_error, self, req
                     ).addErrback(unrecoverable_error, self, req)
         else:
@@ -186,6 +194,27 @@ class DjangoBot(IRCClient):
                 if mask in self.chanmodes[channel]:
                     return self.dispatchable_event(user, channel,
                                                    new_nick, 'nick')
+
+    def multiple(self, recipient, data, responses, **kwargs):
+        """The MULTIPLE response type contains a list of response
+        objects in the data parameter, but ultimately discards the
+        recipient or any kwargs."""
+        for response in responses:
+            if response.method == 'QUIET': # pragma: nocover
+                log.debug(response)
+                continue
+            elif response.method == 'PRIVMSG': # pragma: nocover
+                opts = {'length':
+                        510 - len(':! PRIVMSG  :' + self.nickname +
+                          response.recipient.encode('utf-8') + self.hostmask)}
+            elif response.method == 'MULTIPLE': # pragma: nocover
+                # If you're doing this, it's your own damn fault.
+                opts = {'responses': response.responses }
+            else: # pragma: nocover
+                opts = {}
+            self.methods[response.method](
+                response.recipient.encode('utf-8'),
+                response.data.encode('utf-8'), **opts) # pragma: nocover
 
     ############### Special methods ###############
     def reimport(self, recipient, data, **kwargs):
@@ -250,7 +279,7 @@ class DjangoBot(IRCClient):
         for channel in self.chanmodes:
             if mask in self.chanmodes[channel]:
                 del(self.chanmodes[channel][mask])
-    
+
     ############### Custom IRC methods ###############
     def me(self, channel, action):
         """Hacking around broken CTCP ACTION stuff with PRIVMSG"""
