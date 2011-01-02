@@ -86,7 +86,9 @@ you can simply::
 
 and it will connect according to the ``IRC_CHANNELS`` variable from
 ``settings.py``.  ``IRC_CHANNELS`` is a sequence of ``irc://`` or
-``ircs://`` urls, like the following::
+``ircs://`` urls, like the following:
+
+.. sourcecode:: python
 
 	IRC_CHANNELS = (
 	 'ircs://nerdbird:password@irc.slashnet.org:6697/privileged/#yardbird',
@@ -112,8 +114,10 @@ files are to be found.
 
 In addition to ``IRC_CHANNELS``, you must set ``ROOT_MSGCONF`` to the
 module that contains ``privmsg`` and any other IRC events that you want
-your bot to handle.  Typically it mimics ``ROOT_URLCONF`` like so::
+your bot to handle.  Typically it mimics ``ROOT_URLCONF`` like so:
 
+.. sourcecode:: python
+        
 	ROOT_URLCONF = 'example.urls'
 	ROOT_MSGCONF = 'example'
 
